@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Regole · Configurazione del portale</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Configurazione del portale</p><p class="sottotitolo">Passo 8 di 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 89%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Regole</h1>
+    
+    
+    
+    <form class="modulo" method="get" action="riepilogo.html">
+    <label class="campo" for="durate">Durate dell’accesso (ore)</label>
+    <input class="testo" id="durate" name="durate" type="text" value="4,24" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="durate-aiuto">
+    <p class="aiuto" id="durate-aiuto">Diventano i bottoni, separate da virgole, per esempio 4,24.</p>
+    <label class="campo" for="attesa">Una richiesta senza risposta scade dopo (minuti)</label>
+    <input class="testo" id="attesa" name="attesa" type="text" value="10" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+    <label class="campo" for="pausa">Dopo un rifiuto lo stesso dispositivo aspetta (minuti)</label>
+    <input class="testo" id="pausa" name="pausa" type="text" value="15" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+    <label class="campo" for="max">Richieste in attesa al massimo nello stesso momento</label>
+    <input class="testo" id="max" name="max" type="text" value="5" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    <div class="azioni"><a class="bottone secondario" href="chat.html">Indietro</a>
+      <button class="bottone" type="submit">Continua</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

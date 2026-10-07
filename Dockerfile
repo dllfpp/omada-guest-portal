@@ -7,4 +7,4 @@ ENV NODE_ENV=production DATA_DIR=/data PORT=8097
 USER node
 EXPOSE 8097
 HEALTHCHECK --interval=60s --timeout=5s CMD wget -qO- http://127.0.0.1:8097/salute >/dev/null || exit 1
-CMD ["node", "src/server.js"]
+CMD ["node", "src/avvio.js"]

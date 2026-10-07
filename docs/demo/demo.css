@@ -1,0 +1,49 @@
+/* Contenitore della demo: usa i token di stile.css (design Clay del portale), nessun colore nuovo. */
+body.demo { display: block; }
+.demo-pagina { max-width: 1120px; margin: 0 auto; padding: 24px 16px 32px; display: flex; flex-direction: column; gap: 28px; }
+.demo-testata { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.demo-testata .marchio { width: 48px; height: 48px; padding: 10px; }
+.demo-titoli { flex: 1 1 320px; min-width: 0; }
+.demo-titoli h1 { margin: 0; font: var(--peso-titoli) clamp(1.5rem, 3vw, 2rem)/1.15 var(--font-titoli); letter-spacing: var(--spaziatura-titoli); text-wrap: balance; }
+.demo-titoli p { margin: 6px 0 0; color: var(--muted); }
+.demo-lingua { display: flex; gap: 8px; }
+.demo-lingua button, .demo-schede a {
+  min-height: 44px; padding: 10px 16px; border: 0; border-radius: var(--raggio-piccolo); cursor: pointer;
+  font: 600 .9375rem/1.2 var(--font); color: var(--primary); background: var(--card); text-decoration: none;
+  box-shadow: 4px 4px 10px #D5DEEC, -4px -4px 10px #FFFFFF; display: inline-flex; align-items: center;
+}
+.demo-lingua button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.demo-schede { display: flex; gap: 12px; flex-wrap: wrap; }
+.demo-sezione { scroll-margin-top: 16px; }
+.demo-sezione h2 { margin: 0 0 6px; font: var(--peso-titoli) 1.375rem/1.25 var(--font-titoli); letter-spacing: var(--spaziatura-titoli); }
+.demo-intro { margin: 0 0 20px; color: var(--muted); max-width: 70ch; }
+.demo-coppia { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.telefono { margin: 0; flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
+.telefono figcaption, .tg-nota { font-size: .875rem; font-weight: 600; color: var(--muted); }
+.telefono iframe { width: 390px; max-width: 100%; height: 780px; border: 0; border-radius: var(--raggio); background: var(--bg); box-shadow: var(--ombra); }
+
+/* Chat Telegram simulata */
+.tg { flex: 1 1 340px; min-width: 0; max-width: 520px; background: var(--card); border-radius: var(--raggio); box-shadow: var(--ombra); overflow: hidden; display: flex; flex-direction: column; min-height: 420px; }
+.tg-testata { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: var(--divisore); }
+.tg-testata p { margin: 0; }
+.tg-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: var(--on-primary); background: var(--primary); flex: none; }
+.tg-nome { font-weight: 800; color: var(--card-fg); }
+.tg-chat { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+.tg-vuota { margin: auto; color: var(--muted); text-align: center; max-width: 30ch; }
+.tg-bolla { align-self: flex-start; max-width: 100%; background: var(--card); color: var(--card-fg); border-radius: var(--raggio-piccolo); padding: 14px 16px; box-shadow: 4px 4px 10px #D5DEEC, -4px -4px 10px #FFFFFF; }
+.tg-testo { line-height: 1.55; overflow-wrap: anywhere; }
+.tg-testo code { font-size: .85em; }
+.tg-tastiera { margin-top: 12px; display: grid; gap: 8px; }
+.tg-riga { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.tg-riga button {
+  min-height: 44px; padding: 8px 12px; border: 0; border-radius: 12px; cursor: pointer;
+  font: 600 .9375rem/1.2 var(--font); color: var(--primary); background: var(--primary-tenue);
+  transition: filter var(--durata) ease-out, transform var(--durata) ease-out;
+}
+.tg-riga button:hover { filter: brightness(.97); }
+.tg-riga button:active { transform: scale(.98); }
+.tg-avviso { margin: 0; min-height: 1.5em; padding: 0 20px 14px; font-size: .875rem; font-weight: 600; color: var(--ok); background: var(--bg); }
+.demo-comandi { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+.demo-comandi .bottone { width: auto; margin-top: 0; padding: 12px 20px; }
+.wizard-cornice { width: 640px; max-width: 100%; height: 900px; border: 0; border-radius: var(--raggio); background: var(--bg); box-shadow: var(--ombra); display: block; }
+@media (prefers-reduced-motion: reduce) { .tg-riga button { transition: none; } }

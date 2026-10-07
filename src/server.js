@@ -19,7 +19,6 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 const MAC = /^([0-9A-F]{2}-){5}[0-9A-F]{2}$/;
 const normMac = m => String(m || '').toUpperCase().replace(/:/g, '-');
-const bande = { 0: '2.4 GHz', 1: '5 GHz', 2: '5 GHz (2)', 3: '6 GHz' };
 
 function invia(res, codice, html, extra = {}) {
   res.writeHead(codice, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...extra });
@@ -47,26 +46,8 @@ function daParametri(p) {
 }
 
 // ---- Telegram ----
-// Lingua dei messaggi: TG_LANG (en predefinito, it).
-const oraTg = ms => orario(ms, testiTg().locale);
-function testoRichiesta(r, esito = '') {
-  const e = tg.esc, T = testiTg();
-  const disp = [r.info?.name, r.info?.vendor, r.info?.osName].filter(Boolean).map(e).join(' · ') || T.sconosciuto;
-  return [
-    `📶 <b>${e(T.titolo(SSID))}</b>`,
-    `👤 ${T.nome}: ${r.nome ? '<b>' + e(r.nome) + '</b>' : '<i>' + T.nonIndicato + '</i>'}`,
-    `📱 ${T.dispositivo}: ${disp}`,
-    `🔖 MAC <code>${r.mac}</code>${r.ip ? ' · IP ' + r.ip : ''}`,
-    `📡 AP: ${e(r.info?.apName || r.apMac)} · ${bande[r.radioId] || ''}`,
-    r.verificato ? '' : `⚠️ <i>${T.nonVerificato}</i>`,
-    `🕒 ${T.scade(oraTg(r.creata), oraTg(r.scadeAttesa))}`,
-    esito,
-  ].filter(Boolean).join('\n');
-}
-const bottoniRichiesta = r => [
-  DURATE.map(h => ({ text: `✅ ${testiTg().ore(h)}`, callback_data: `sg:ok:${r.id}:${h}` })),
-  [{ text: `❌ ${testiTg().rifiuta}`, callback_data: `sg:no:${r.id}` }],
-];
+// Testo e bottoni dei messaggi in messaggi.js (riusati dalla demo statica).
+const { testoRichiesta, bottoniRichiesta, oraTg } = require('./messaggi');
 
 async function nuovaRichiesta(dati, nome) {
   let info = null;
@@ -211,11 +192,12 @@ const server = http.createServer((req, res) => {
   });
 });
 
-if (require.main === module) {
+// Avvio del portale (dopo che la configurazione è stata caricata, da avvio.js o dall'ambiente).
+function avvia() {
   // Configurazione obbligatoria: senza questi valori il portale non può funzionare.
   const mancanti = ['SSID', 'OMADA_URL', 'OMADA_ID', 'OMADA_SITE_ID', 'OMADA_CLIENT_ID', 'OMADA_CLIENT_SECRET', 'HOTSPOT_USER', 'HOTSPOT_PASS']
     .filter(k => !process.env[k]);
-  if (mancanti.length) { console.error('Variabili mancanti in .env: ' + mancanti.join(', ')); process.exit(1); }
+  if (mancanti.length) { console.error('Configurazione incompleta: ' + mancanti.join(', ') + ' (avvia src/avvio.js per il wizard)'); process.exit(1); }
   if (!tg.attivo) log('Telegram non configurato (TG_TOKEN e TG_CHAT): le richieste non verranno notificate');
   server.listen(PORT, () => log(`portale su :${PORT}, SSID ${SSID}, durate ${DURATE.join('/')} h`));
   if (tg.attivo) tg.ascolta(stato, bottone, log);
@@ -229,4 +211,6 @@ if (require.main === module) {
   }, 30000);
 }
 
-module.exports = { server, daParametri, testoRichiesta, bottone, stato };
+if (require.main === module) avvia();
+
+module.exports = { server, avvia, daParametri, testoRichiesta, bottone, stato };

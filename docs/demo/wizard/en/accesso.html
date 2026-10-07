@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Enter the setup code · Guest portal setup</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Guest portal setup</p><p class="sottotitolo"></p></div>
+  </header>
+  
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Enter the setup code</h1>
+    <p class="testo-principale">To make sure only you can configure the portal, the container printed a one-time setup code in its log.</p>
+    
+    
+    <ol class="istruzioni"><li>Run <code>docker logs &lt;container&gt;</code> (with Docker Compose: <code>docker compose logs</code>).</li><li>Copy the code from the line “Setup code”.</li></ol><form class="modulo" method="get" action="controller.html">
+    <label class="campo" for="codice">Setup code</label>
+    <input class="testo" id="codice" name="codice" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off">
+    <button class="bottone" type="submit">Start setup</button></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

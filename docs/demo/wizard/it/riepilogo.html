@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Controlla e salva · Configurazione del portale</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Configurazione del portale</p><p class="sottotitolo">Passo 9 di 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 100%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Controlla e salva</h1>
+    
+    
+    
+    <dl class="dati riepilogo"><dt>Controller</dt><dd>https://192.168.0.10:8043 (6.2.0)</dd><dt>Sito</dt><dd>Home</dd><dt>SSID ospiti</dt><dd>GUEST-WIFI</dd><dt>Operatore hotspot</dt><dd>guest-portal</dd><dt>Bot Telegram</dt><dd>@demo_portal_bot</dd><dt>Chat</dt><dd>Family</dd><dt>Topic</dt><dd>Guest WiFi</dd><dt>Lingua dei messaggi</dt><dd>Italiano</dd><dt>Durate (ore)</dt><dd>4,24</dd></dl>
+            
+            <h2 class="sottotitolo-wizard">Ancora da fare nel controller</h2>
+            <ol class="istruzioni"><li><b>Portale</b> (Authentication › Portal): aggiungi un portale con autenticazione <b>External Portal Server</b>, indirizzo <code>192.168.0.20</code> e porta <code>8097</code>, sull’SSID <b>GUEST-WIFI</b>.</li><li><b>Regola di accesso</b> (ACL, EAP ACL): permetti il TCP dall’SSID <b>GUEST-WIFI</b> verso <code>192.168.0.20:8097</code> e verso le porte del portale del controller (8088 e 8843 di serie). Senza, Guest Network blocca anche il portale.</li></ol>
+            <form class="modulo" method="get" action="fatto.html"><div class="azioni"><a class="bottone secondario" href="regole.html">Indietro</a>
+      <button class="bottone" type="submit">Salva e avvia il portale</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

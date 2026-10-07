@@ -10,7 +10,7 @@ const TOPIC = (process.env.TG_TOPIC || '').trim();
 let thread = Number(process.env.TG_THREAD) || 0;
 
 async function api(metodo, params) {
-  const r = await fetch(`https://api.telegram.org/bot${TOKEN}/${metodo}`, {
+  const r = await fetch(`${process.env.TG_API_URL || 'https://api.telegram.org'}/bot${TOKEN}/${metodo}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),

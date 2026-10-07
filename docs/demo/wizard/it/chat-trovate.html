@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Dove arrivano le richieste · Configurazione del portale</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Configurazione del portale</p><p class="sottotitolo">Passo 7 di 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 78%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Dove arrivano le richieste</h1>
+    <p class="testo-principale">Indica a @demo_portal_bot dove scrivere:</p>
+    
+    
+    <ol class="istruzioni"><li><b>Chat privata</b>: apri <b>@demo_portal_bot</b> in Telegram e premi <b>Avvia</b>.</li><li><b>Gruppo</b>: aggiungi <b>@demo_portal_bot</b> al gruppo come amministratore, poi scrivi un messaggio nel gruppo, o nel topic che vuoi usare.</li><li>Poi premi <b>Cerca le chat</b>.</li></ol><form class="modulo" method="get" action="chat-trovate.html"><input type="hidden" name="azione" value="cerca"><button class="bottone secondario" type="submit">Cerca le chat</button></form><form class="modulo" method="get" action="regole.html"><input type="hidden" name="azione" value="invia">
+              <fieldset class="scelte"><legend class="sr">Dove arrivano le richieste</legend><label class="scelta">
+      <input type="radio" name="scelta" value="0">
+      <span><b>Topic “Guest WiFi” in “Family”</b><small>scritto da Owner · <code>-100 · 7</code></small></span></label><label class="scelta">
+      <input type="radio" name="scelta" value="1">
+      <span><b>Chat privata con Owner</b><small><code>42</code></small></span></label></fieldset>
+              <details class="manuale"><summary>Inserisci tu gli ID</summary>
+                
+    <label class="campo" for="chat">ID della chat</label>
+    <input class="testo" id="chat" name="chat" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+                
+    <label class="campo" for="thread">ID del topic (facoltativo)</label>
+    <input class="testo" id="thread" name="thread" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+                
+    <label class="campo" for="admin">ID utente del proprietario</label>
+    <input class="testo" id="admin" name="admin" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="admin-aiuto" inputmode="numeric">
+    <p class="aiuto" id="admin-aiuto">Il proprietario può premere i bottoni da qualsiasi chat. Si ricava da chi ha scritto il messaggio.</p>
+              </details>
+              <label class="campo" for="lingua">Lingua dei messaggi</label>
+              <select class="testo" id="lingua" name="lingua">
+                <option value="en" selected>English</option>
+                <option value="it">Italiano</option>
+              </select><div class="azioni"><a class="bottone secondario" href="telegram.html">Indietro</a>
+      <button class="bottone" type="submit">Manda un messaggio di prova e continua</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

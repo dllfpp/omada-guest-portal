@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Applicazione Open API · Configurazione del portale</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Configurazione del portale</p><p class="sottotitolo">Passo 2 di 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 22%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Applicazione Open API</h1>
+    <p class="testo-principale">Il portale legge i dati dei dispositivi e crea il suo operatore tramite l’Open API del controller. Crea un’applicazione apposta:</p>
+    
+    <p class="messaggio ok" role="status">Trovato il controller Omada 6.2.0.</p>
+    <ol class="istruzioni"><li>Nel controller passa alla vista <b>Global</b> e apri <b>Settings › Platform Integration › Open API</b>.</li><li>Premi <b>Add New App</b>. Dai un nome (per esempio “Portale ospiti”), scegli la modalità <b>Client</b>, il ruolo <b>Administrator</b> e in <b>Site Privileges</b> il sito con la Wi-Fi ospiti.</li><li>Salva, premi l’icona dell’occhio accanto alla nuova app e copia <b>Client ID</b> e <b>Client Secret</b>.</li></ol><p class="aiuto nota-wizard">Con il ruolo Administrator il wizard può creare per te l’operatore hotspot. Con il ruolo Viewer crea tu l’operatore (Hotspot › Operators) e più avanti scegli “operatore esistente”.</p><form class="modulo" method="get" action="sito.html">
+    <label class="campo" for="clientId">Client ID</label>
+    <input class="testo" id="clientId" name="clientId" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off">
+    
+    <label class="campo" for="clientSecret">Client Secret</label>
+    <input class="testo" id="clientSecret" name="clientSecret" type="password" value="" autocomplete="new-password" spellcheck="false" autocapitalize="off">
+    <div class="azioni"><a class="bottone secondario" href="controller.html">Indietro</a>
+      <button class="bottone" type="submit">Continua</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

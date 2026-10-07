@@ -5,8 +5,14 @@ An external captive portal for **TP-Link Omada** guest Wi-Fi where every new dev
 gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours · ❌ Reject**, and can
 **⛔ Revoke** an approved device later.
 
+**[Try the live demo →](https://dllfpp.github.io/omada-guest-portal/)** (runs in your browser, with a simulated
+controller and a simulated Telegram).
+
 - Works with Omada EAPs managed by an Omada controller (tested on controller v6.2), no Omada gateway needed.
 - Node.js 22, **no dependencies**. One container, state kept in a JSON file on a volume.
+- **Setup wizard on the first start**: controller address, Open API credentials (with the steps to create
+  them), site and guest SSID picked from the controller, hotspot operator created for you, Telegram bot and
+  chat detected automatically. No `.env` needed.
 - Guest pages are server-rendered HTML with **no JavaScript and no external resources**
   (before approval the guest has no internet): the waiting page refreshes itself, the welcome page shows a
   live **countdown** of the remaining time built in pure CSS.
@@ -91,25 +97,59 @@ the buttons would fail with `409 Conflict`.
   it and confirms there; until then requests go privately to `TG_ADMIN`. Or set `TG_THREAD` directly.
 - Buttons work for anyone pressing them in the configured chat/topic, and for `TG_ADMIN` everywhere.
 
-## Configuration and deploy
+## Install and set up
 
 ```sh
-cp .env.example .env      # fill in controller, operator, SSID and Telegram values
 docker compose up -d --build
+docker logs omada-guest-portal           # shows the one-time setup code
+```
+
+Open `http://<docker-host>:8097/` in a browser, enter the setup code and follow the wizard:
+
+1. **Controller**: its address; the wizard checks it and reads the controller ID and version.
+2. **Open API application**: create it in the controller (*Global* view › *Settings › Platform Integration ›
+   Open API › Add New App*, mode **Client**, role **Administrator**, the guest site in *Site Privileges*) and
+   paste the Client ID and Client Secret.
+3. **Site** and **guest SSID**, chosen from the lists read from the controller; an SSID without Guest Network
+   gets a warning.
+4. **Hotspot operator**: created for you with a random password, or an existing one (checked with a login).
+5. **Telegram bot**: create it with @BotFather and paste the token; the wizard refuses a bot that already
+   has a webhook (another program is using it).
+6. **Chat**: write to the bot, or in the group/topic where it is an admin, and press *Find chats*; the
+   wizard lists them, you pick one and it sends a test message.
+7. **Rules**, then a summary with what is still to do in the controller (portal and ACL, with this
+   server’s address filled in). Save, and the portal starts right away in the same container.
+
+<p><img src="docs/screenshots/en-5-wizard-openapi.png" width="640" height="963" alt="Setup wizard, step 2: steps to create the Open API application and fields for Client ID and Client Secret"></p>
+
+The wizard is protected by the setup code printed in the log (it runs on the same port the guests can reach)
+and switches off once the configuration is saved. The configuration lives in `/data/config.json` on the
+volume (readable only by the container user).
+
+- **Change the configuration later**: `docker exec omada-guest-portal touch /data/setup`, then
+  `docker restart omada-guest-portal`; the wizard opens again with the current values.
+- **Environment variables instead of the wizard**: copy `.env.example` to `.env` and fill it in; values from
+  the environment take precedence over `config.json`. See [`.env.example`](.env.example) for every option.
+
+```sh
 curl -s http://localhost:8097/salute     # health: requests waiting, Telegram on/off, topic in use
 docker logs -f omada-guest-portal        # requests, approvals, button presses
 ```
 
-The service refuses to start if a required variable is missing. See [`.env.example`](.env.example) for every option.
-
 Preview the welcome page with fake data (no state, no controller calls):
 `/anteprima/benvenuto?nome=Guest&ore=4&secondi=90` (add `&lang=it` for Italian; at zero it moves to `/anteprima/terminata`).
 
-## Tests
+## Tests and demo
 
 ```sh
-node --test test/*.test.js   # full flow, languages and Telegram topics, with a fake controller and a fake Telegram
+node --test test/*.test.js   # portal flow, languages, Telegram topics, setup wizard and first start,
+                             # with a fake controller and a fake Telegram
+node demo/build.js           # rebuilds the static demo in docs/ (GitHub Pages)
 ```
+
+The demo in `docs/` uses the real code: the guest pages and the Telegram message are generated in the browser
+by `src/lingue.js`, `src/pagine.js` and `src/messaggi.js` (bundled by `demo/build.js`), and the wizard pages are
+recorded from the real wizard running against the fake controller of the tests.
 
 ## Notes and limits
 

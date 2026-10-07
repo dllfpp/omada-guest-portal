@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Review and save · Guest portal setup</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Guest portal setup</p><p class="sottotitolo">Step 9 of 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 100%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Review and save</h1>
+    
+    
+    
+    <dl class="dati riepilogo"><dt>Controller</dt><dd>https://192.168.0.10:8043 (6.2.0)</dd><dt>Site</dt><dd>Home</dd><dt>Guest SSID</dt><dd>GUEST-WIFI</dd><dt>Hotspot operator</dt><dd>guest-portal</dd><dt>Telegram bot</dt><dd>@demo_portal_bot</dd><dt>Chat</dt><dd>Family</dd><dt>Topic</dt><dd>Guest WiFi</dd><dt>Message language</dt><dd>English</dd><dt>Durations (hours)</dt><dd>4,24</dd></dl>
+            
+            <h2 class="sottotitolo-wizard">Still to do in the controller</h2>
+            <ol class="istruzioni"><li><b>Portal</b> (Authentication › Portal): add a portal with authentication type <b>External Portal Server</b>, address <code>192.168.0.20</code> and port <code>8097</code>, on SSID <b>GUEST-WIFI</b>.</li><li><b>Access rule</b> (ACL, EAP ACL): allow TCP from SSID <b>GUEST-WIFI</b> to <code>192.168.0.20:8097</code> and to the controller’s portal ports (8088 and 8843 by default). Without it Guest Network blocks the portal itself.</li></ol>
+            <form class="modulo" method="get" action="fatto.html"><div class="azioni"><a class="bottone secondario" href="regole.html">Back</a>
+      <button class="bottone" type="submit">Save and start the portal</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

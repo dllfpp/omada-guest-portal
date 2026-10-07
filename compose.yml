@@ -4,7 +4,10 @@ services:
     image: omada-guest-portal:latest
     container_name: omada-guest-portal
     restart: unless-stopped
-    env_file: .env
+    # Facoltativo: senza .env la configurazione si fa dal wizard al primo avvio.
+    env_file:
+      - path: .env
+        required: false
     environment:
       TZ: Europe/Rome
     ports:

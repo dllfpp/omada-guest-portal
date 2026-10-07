@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Where requests arrive · Guest portal setup</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Guest portal setup</p><p class="sottotitolo">Step 7 of 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 78%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Where requests arrive</h1>
+    <p class="testo-principale">Tell @demo_portal_bot where to write:</p>
+    
+    <p class="messaggio ok" role="status">Bot @demo_portal_bot is ready.</p>
+    <ol class="istruzioni"><li><b>Private chat</b>: open <b>@demo_portal_bot</b> in Telegram and press <b>Start</b>.</li><li><b>Group</b>: add <b>@demo_portal_bot</b> to the group as an administrator, then write a message in the group, or in the topic you want to use.</li><li>Then press <b>Find chats</b>.</li></ol><form class="modulo" method="get" action="chat-trovate.html"><input type="hidden" name="azione" value="cerca"><button class="bottone secondario" type="submit">Find chats</button></form><form class="modulo" method="get" action="regole.html"><input type="hidden" name="azione" value="invia">
+              
+              <details class="manuale"><summary>Enter the IDs yourself</summary>
+                
+    <label class="campo" for="chat">Chat ID</label>
+    <input class="testo" id="chat" name="chat" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+                
+    <label class="campo" for="thread">Topic ID (optional)</label>
+    <input class="testo" id="thread" name="thread" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
+    
+                
+    <label class="campo" for="admin">Owner’s user ID</label>
+    <input class="testo" id="admin" name="admin" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="admin-aiuto" inputmode="numeric">
+    <p class="aiuto" id="admin-aiuto">The owner can press the buttons from anywhere. It is taken from who wrote the message.</p>
+              </details>
+              <label class="campo" for="lingua">Language of the messages</label>
+              <select class="testo" id="lingua" name="lingua">
+                <option value="en" selected>English</option>
+                <option value="it">Italiano</option>
+              </select><div class="azioni"><a class="bottone secondario" href="telegram.html">Back</a>
+      <button class="bottone" type="submit">Send a test message and continue</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

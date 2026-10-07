@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omada Guest Approval Portal · demo</title>
+<meta name="description" content="Interactive demo of a captive portal for TP-Link Omada guest Wi-Fi where every device is approved on Telegram.">
+<link rel="stylesheet" href="demo/stile.css">
+<link rel="stylesheet" href="demo/demo.css">
+</head>
+<body class="demo">
+<main class="demo-pagina">
+  <header class="demo-testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div class="demo-titoli">
+      <h1>Omada Guest Approval Portal</h1>
+      <p data-t="sottotitolo">Interactive demo: everything runs in your browser, with a simulated controller and a simulated Telegram.</p>
+    </div>
+    <div class="demo-lingua" role="group" aria-label="Language">
+      <button type="button" data-lingua="en" aria-pressed="true">English</button>
+      <button type="button" data-lingua="it" aria-pressed="false">Italiano</button>
+    </div>
+  </header>
+
+  <nav class="demo-schede" aria-label="Demo sections">
+    <a href="#ospite" data-t="schedaOspite">Guest and owner</a>
+    <a href="#wizard" data-t="schedaWizard">Setup wizard</a>
+    <a href="https://github.com/dllfpp/omada-guest-portal" data-t="codice">Source code</a>
+  </nav>
+
+  <section id="ospite" class="demo-sezione" aria-labelledby="titolo-ospite">
+    <h2 id="titolo-ospite" data-t="titoloOspite">A guest asks, the owner approves</h2>
+    <p class="demo-intro" data-t="introOspite">The phone of a guest who joined the guest Wi-Fi, and the owner’s Telegram chat. Ask for access from the phone, then answer from the chat.</p>
+    <div class="demo-coppia">
+      <figure class="telefono">
+        <figcaption data-t="telefono">Guest’s phone</figcaption>
+        <iframe id="telefono" title="Guest’s phone" width="390" height="780"></iframe>
+      </figure>
+      <section class="tg" aria-labelledby="titolo-tg">
+        <header class="tg-testata">
+          <span class="tg-avatar" aria-hidden="true">GP</span>
+          <div><p id="titolo-tg" class="tg-nome">@demo_portal_bot</p><p class="tg-nota" data-t="tgNota">Simulated Telegram chat</p></div>
+        </header>
+        <div id="chat" class="tg-chat" aria-live="polite"><p class="tg-vuota" data-t="tgVuota">No requests yet. Ask for access from the phone.</p></div>
+        <p id="avviso" class="tg-avviso" role="status"></p>
+      </section>
+    </div>
+    <div class="demo-comandi">
+      <button type="button" class="bottone secondario" id="avanti" data-t="avanti">Skip to expiry</button>
+      <button type="button" class="bottone secondario" id="ricomincia" data-t="ricomincia">Restart demo</button>
+    </div>
+  </section>
+
+  <section id="wizard" class="demo-sezione" aria-labelledby="titolo-wizard">
+    <h2 id="titolo-wizard" data-t="titoloWizard">First run: the setup wizard</h2>
+    <p class="demo-intro" data-t="introWizard">On the first start the container opens this wizard. These are its real pages, recorded against a simulated controller: any value works, just press the buttons.</p>
+    <iframe id="wizard-pagina" class="wizard-cornice" title="Setup wizard" width="640" height="900" src="demo/wizard/en/accesso.html"></iframe>
+    <div class="demo-comandi">
+      <button type="button" class="bottone secondario" id="wizard-inizio" data-t="wizardInizio">Restart the wizard</button>
+    </div>
+  </section>
+
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+<script src="demo/portale.js"></script>
+<script src="demo/demo.js"></script>
+</body>
+</html>

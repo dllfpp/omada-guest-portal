@@ -1,26 +1,30 @@
 'use strict';
 // Controller Omada: Open API (lettura client) e API hotspot dell'operatore (autorizzazione, revoca).
+const http = require('http');
 const https = require('https');
 
+// Letta a ogni uso, non al caricamento: il wizard scrive la configurazione dopo che il modulo è già caricato.
 const CFG = {
-  url: process.env.OMADA_URL, // es. https://omada.lan:8043
-  id: process.env.OMADA_ID,
-  site: process.env.OMADA_SITE_ID,
-  clientId: process.env.OMADA_CLIENT_ID,
-  clientSecret: process.env.OMADA_CLIENT_SECRET,
-  hotspotUser: process.env.HOTSPOT_USER,
-  hotspotPass: process.env.HOTSPOT_PASS,
+  get url() { return process.env.OMADA_URL; }, // es. https://omada.lan:8043
+  get id() { return process.env.OMADA_ID; },
+  get site() { return process.env.OMADA_SITE_ID; },
+  get clientId() { return process.env.OMADA_CLIENT_ID; },
+  get clientSecret() { return process.env.OMADA_CLIENT_SECRET; },
+  get hotspotUser() { return process.env.HOTSPOT_USER; },
+  get hotspotPass() { return process.env.HOTSPOT_PASS; },
 };
 
-// Il controller ha un certificato autofirmato: si accetta solo per questo host.
-function richiesta(method, path, { headers = {}, body, cookie } = {}) {
-  const u = new URL(path, CFG.url);
+// Chiamata a un controller qualsiasi (serve anche al wizard, prima che la configurazione esista).
+// Il controller ha di solito un certificato autofirmato: lo si accetta, solo per queste chiamate.
+function richiestaA(base, method, path, { headers = {}, body, cookie, timeout = 10000 } = {}) {
+  const u = new URL(path, base);
   const dati = body === undefined ? null : JSON.stringify(body);
   const h = { Accept: 'application/json', ...headers };
   if (dati) { h['Content-Type'] = 'application/json'; h['Content-Length'] = Buffer.byteLength(dati); }
   if (cookie) h.Cookie = cookie;
   return new Promise((ok, ko) => {
-    const r = https.request(u, { method, headers: h, rejectUnauthorized: false, timeout: 10000 }, res => {
+    const mod = u.protocol === 'http:' ? http : https;
+    const r = mod.request(u, { method, headers: h, rejectUnauthorized: false, timeout }, res => {
       let s = '';
       res.on('data', c => (s += c));
       res.on('end', () => {
@@ -35,6 +39,8 @@ function richiesta(method, path, { headers = {}, body, cookie } = {}) {
     r.end();
   });
 }
+
+const richiesta = (method, path, opz) => richiestaA(CFG.url, method, path, opz);
 
 // ---- Open API (client credentials, token 2 ore) ----
 let openTok = null, openScade = 0;
@@ -110,4 +116,4 @@ async function revoca(mac) {
   } catch (e) { throw new Error('revoca: ' + e.message); }
 }
 
-module.exports = { cliente, autorizza, revoca, CFG };
+module.exports = { cliente, autorizza, revoca, richiestaA, CFG };

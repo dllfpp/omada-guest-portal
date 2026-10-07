@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Operatore hotspot · Configurazione del portale</title>
+<link rel="stylesheet" href="../../stile.css">
+</head>
+<body>
+<main class="pagina larga">
+  <header class="testata">
+    <svg class="icona marchio" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+    <div><p class="rete">Configurazione del portale</p><p class="sottotitolo">Passo 5 di 9</p></div>
+  </header>
+  <div class="progresso" aria-hidden="true"><span style="width: 56%"></span></div>
+  <section class="scheda wizard" aria-labelledby="titolo">
+    <h1 id="titolo">Operatore hotspot</h1>
+    <p class="testo-principale">Il portale approva gli ospiti con un account operatore hotspot del controller.</p>
+    
+    
+    <form class="modulo" method="get" action="telegram.html"><fieldset class="scelte"><legend class="sr">Operatore hotspot</legend>
+            <label class="scelta">
+      <input type="radio" name="modo" value="crea" checked>
+      <span><b>Crealo tu</b><small>Un operatore “guest-portal” con una password lunga e casuale, solo per questo sito.</small></span></label>
+            <label class="scelta">
+      <input type="radio" name="modo" value="esistente">
+      <span><b>Usa un operatore esistente</b><small>Uno creato da te in Hotspot › Operators.</small></span></label></fieldset>
+            <div class="sotto-scelta">
+    <label class="campo" for="nome">Nome dell’operatore</label>
+    <input class="testo" id="nome" name="nome" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" >
+    
+            
+    <label class="campo" for="password">Password</label>
+    <input class="testo" id="password" name="password" type="password" value="" autocomplete="new-password" spellcheck="false" autocapitalize="off" >
+    </div><div class="azioni"><a class="bottone secondario" href="ssid.html">Indietro</a>
+      <button class="bottone" type="submit">Continua</button></div></form>
+  </section>
+  <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
+</main>
+</body>
+</html>

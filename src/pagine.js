@@ -91,32 +91,40 @@ function pagina(s, { css = '/stile.css' } = {}) {
   // L'attesa si ricarica ogni 5 s; il benvenuto si ricarica allo scadere del conto (s.ricarica = URL).
   const refresh = s.stato === 'attesa' ? '<meta http-equiv="refresh" content="5">'
     : s.ricarica ? `<meta http-equiv="refresh" content="${Math.max(1, Math.ceil((s.r.scade - (s.adesso || Date.now())) / 1000) + 2)};url=${esc(s.ricarica)}">` : '';
+  return guscio({
+    lingua, css, refresh, titolo: `${esc(rete())} · ${T.sottotitolo}`, rete: esc(rete()), sottotitolo: T.sottotitolo,
+    corpo: `<section class="scheda tono-${c.tono}" aria-labelledby="titolo">
+    <div class="stato">${icona(c.icona)}</div>
+    <h1 id="titolo">${c.titolo}</h1>
+    <p class="testo-principale">${c.testo}</p>
+    ${c.corpo}
+  </section>
+  <p class="nota">${icona('scudo', 'piccola')}<span>${T.nota}</span></p>`,
+  });
+}
+
+// Struttura comune a portale e wizard: testata con il marchio, contenuto, firma.
+function guscio({ lingua, css = '/stile.css', refresh = '', titolo, rete: nomeRete, sottotitolo, corpo, larga = false }) {
   return `<!doctype html>
 <html lang="${lingua}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 ${refresh}
-<title>${esc(rete())} · ${T.sottotitolo}</title>
+<title>${titolo}</title>
 <link rel="stylesheet" href="${css}">
 </head>
 <body>
-<main class="pagina">
+<main class="pagina${larga ? ' larga' : ''}">
   <header class="testata">
     ${icona('wifi', 'marchio')}
-    <div><p class="rete">${esc(rete())}</p><p class="sottotitolo">${T.sottotitolo}</p></div>
+    <div><p class="rete">${nomeRete}</p><p class="sottotitolo">${sottotitolo}</p></div>
   </header>
-  <section class="scheda tono-${c.tono}" aria-labelledby="titolo">
-    <div class="stato">${icona(c.icona)}</div>
-    <h1 id="titolo">${c.titolo}</h1>
-    <p class="testo-principale">${c.testo}</p>
-    ${c.corpo}
-  </section>
-  <p class="nota">${icona('scudo', 'piccola')}<span>${T.nota}</span></p>
+  ${corpo}
   <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
 </main>
 </body>
 </html>`;
 }
 
-module.exports = { pagina, esc, ora };
+module.exports = { pagina, guscio, icona, esc, ora };
