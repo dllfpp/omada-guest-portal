@@ -17,12 +17,12 @@ gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours ·
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/1-request.png" width="390" height="780" alt="Request page: optional name field and Ask for access button"></td>
-    <td><img src="docs/screenshots/2-waiting.png" width="390" height="780" alt="Waiting page: request sent, waiting for approval"></td>
+    <td><img src="docs/screenshots/en-1-request.png" width="390" height="780" alt="Request page: optional name field and Ask for access button"></td>
+    <td><img src="docs/screenshots/en-2-waiting.png" width="390" height="780" alt="Waiting page: request sent, waiting for approval"></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/3-welcome.png" width="390" height="780" alt="Welcome page after approval with a 4:00:00 countdown"></td>
-    <td><img src="docs/screenshots/4-rejected.png" width="390" height="780" alt="Rejected request page"></td>
+    <td><img src="docs/screenshots/en-3-welcome.png" width="390" height="780" alt="Welcome page after approval with a 4:00:00 countdown"></td>
+    <td><img src="docs/screenshots/en-4-rejected.png" width="390" height="780" alt="Rejected request page"></td>
   </tr>
 </table>
 
