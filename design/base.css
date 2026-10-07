@@ -1,0 +1,69 @@
+/* ---- Struttura comune: usa solo i token definiti sopra ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  background: var(--bg); color: var(--fg);
+  font: 400 16px/1.5 var(--font);
+  display: flex; justify-content: center;
+}
+.pagina {
+  width: 100%; max-width: 440px;
+  padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 20px;
+}
+.testata { display: flex; align-items: center; gap: 12px; }
+.testata p { margin: 0; }
+.rete { font: var(--peso-titoli) 1.125rem/1.2 var(--font-titoli); letter-spacing: var(--spaziatura-titoli); }
+.sottotitolo { color: var(--muted); font-size: .875rem; }
+.icona { width: 24px; height: 24px; flex: none; }
+.marchio { width: 40px; height: 40px; padding: 8px; border-radius: var(--raggio-piccolo); background: var(--primary); color: var(--on-primary); }
+.scheda {
+  background: var(--card); color: var(--card-fg);
+  border: var(--bordo); border-radius: var(--raggio); box-shadow: var(--ombra);
+  padding: 28px 24px;
+}
+.stato { width: 48px; height: 48px; display: grid; place-items: center; border-radius: var(--raggio-piccolo); margin-bottom: 16px; background: var(--tono-sfondo); color: var(--tono); }
+.stato .icona { width: 28px; height: 28px; }
+.tono-neutro { --tono: var(--primary); --tono-sfondo: var(--primary-tenue); }
+.tono-attesa { --tono: var(--attesa); --tono-sfondo: var(--attesa-tenue); }
+.tono-ok { --tono: var(--ok); --tono-sfondo: var(--ok-tenue); }
+.tono-no { --tono: var(--no); --tono-sfondo: var(--no-tenue); }
+.tono-avviso { --tono: var(--avviso); --tono-sfondo: var(--avviso-tenue); }
+h1 { margin: 0 0 8px; font: var(--peso-titoli) 1.5rem/1.25 var(--font-titoli); letter-spacing: var(--spaziatura-titoli); text-wrap: balance; }
+.testo-principale { margin: 0; color: var(--card-muted); }
+.modulo { margin-top: 24px; display: flex; flex-direction: column; }
+.campo { font-weight: 600; margin-bottom: 6px; }
+.facoltativo { font-weight: 400; color: var(--card-muted); }
+.testo {
+  font: inherit; font-size: 16px; color: var(--card-fg); background: var(--input);
+  border: var(--bordo-input); border-radius: var(--raggio-piccolo);
+  min-height: 48px; padding: 10px 14px; width: 100%;
+}
+.aiuto { margin: 6px 0 0; font-size: .875rem; color: var(--card-muted); }
+.bottone {
+  margin-top: 20px; min-height: 48px; padding: 12px 20px; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 600 1rem/1.2 var(--font-titoli); letter-spacing: var(--spaziatura-titoli); text-decoration: none;
+  color: var(--on-primary); background: var(--primary);
+  border: var(--bordo-bottone); border-radius: var(--raggio-piccolo); box-shadow: var(--ombra-bottone);
+  cursor: pointer; transition: transform var(--durata) ease-out, filter var(--durata) ease-out, box-shadow var(--durata) ease-out;
+}
+.bottone:hover { filter: brightness(1.08); }
+.bottone:active { transform: translateY(1px) scale(.99); }
+:focus-visible { outline: 3px solid var(--anello); outline-offset: 3px; }
+.dati { margin: 20px 0 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; padding-top: 16px; border-top: var(--divisore); }
+.dati dt { color: var(--card-muted); }
+.dati dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.avanzamento { margin-top: 20px; height: 6px; border-radius: 99px; background: var(--attesa-tenue); overflow: hidden; }
+.barra { display: block; height: 100%; width: 40%; background: var(--attesa); border-radius: inherit; animation: scorri 1.6s ease-in-out infinite; }
+@keyframes scorri { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.nota { margin: 0; display: flex; gap: 10px; align-items: flex-start; font-size: .875rem; color: var(--muted); }
+.piccola { width: 18px; height: 18px; margin-top: 1px; }
+.firma { margin-top: auto; text-align: center; font-size: .875rem; }
+.firma a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; display: inline-block; padding: 12px 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .barra { animation: none; width: 100%; opacity: .6; }
+  .bottone { transition: none; }
+}

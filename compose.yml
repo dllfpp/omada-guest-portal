@@ -1,0 +1,17 @@
+services:
+  portale:
+    build: .
+    image: omada-guest-portal:latest
+    container_name: omada-guest-portal
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: Europe/Rome
+    ports:
+      - "8097:8097"
+    volumes:
+      - data:/data
+
+volumes:
+  data:
+    name: omada-guest-portal_data
