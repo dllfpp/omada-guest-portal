@@ -1,5 +1,6 @@
 'use strict';
 // Bot dedicato in long polling: nessun webhook, nessun altro deve leggere gli aggiornamenti di questo bot.
+const { tg: testi } = require('./lingue');
 const TOKEN = process.env.TG_TOKEN;
 const CHAT = String(process.env.TG_CHAT || '');    // chat privata o gruppo dove arrivano le richieste
 const ADMIN = String(process.env.TG_ADMIN || process.env.TG_CHAT || '');  // proprietario: sempre autorizzato ai bottoni
@@ -55,7 +56,7 @@ async function scopriTopic(m, stato, log) {
   stato.dati.tgThread = thread;
   stato.salva();
   log('topic telegram trovato', nome, thread);
-  await invia(`✅ <b>${esc(process.env.SSID || 'Wi-Fi ospiti')}</b> · da ora le richieste di accesso alla Wi-Fi ospiti arrivano in questo topic.`)
+  await invia(`✅ ${testi().topic(esc(process.env.SSID || 'Guest Wi-Fi'))}`)
     .catch(e => log('telegram', e.message));
 }
 
@@ -72,9 +73,9 @@ async function ascolta(stato, gestisci, log = console.log) {
         if (u.message) { await scopriTopic(u.message, stato, log); continue; }
         const cb = u.callback_query;
         if (!cb) continue;
-        if (!autorizzato(cb)) { log('bottone da utente non autorizzato', cb.from?.id); await rispondi(cb.id, 'Non autorizzato'); continue; }
+        if (!autorizzato(cb)) { log('bottone da utente non autorizzato', cb.from?.id); await rispondi(cb.id, testi().risposte.nonAutorizzato); continue; }
         log('bottone', cb.data);
-        try { await gestisci(cb); } catch (e) { log('errore bottone', e.message); await rispondi(cb.id, 'Errore: ' + e.message.slice(0, 150)); }
+        try { await gestisci(cb); } catch (e) { log('errore bottone', e.message); await rispondi(cb.id, testi().risposte.errore + e.message.slice(0, 150)); }
       }
       if (agg.length) stato.salva();
     } catch (e) {

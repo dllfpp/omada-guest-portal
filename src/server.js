@@ -5,7 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const omada = require('./omada');
 const tg = require('./telegram');
-const { pagina, ora } = require('./pagine');
+const { pagina } = require('./pagine');
+const { linguaDa, tg: testiTg, orario } = require('./lingue');
 const { Stato, LIMITI } = require('./stato');
 
 const PORT = Number(process.env.PORT || 8097);
@@ -18,7 +19,7 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 const MAC = /^([0-9A-F]{2}-){5}[0-9A-F]{2}$/;
 const normMac = m => String(m || '').toUpperCase().replace(/:/g, '-');
-const bande = { 0: '2,4 GHz', 1: '5 GHz', 2: '5 GHz (2)', 3: '6 GHz' };
+const bande = { 0: '2.4 GHz', 1: '5 GHz', 2: '5 GHz (2)', 3: '6 GHz' };
 
 function invia(res, codice, html, extra = {}) {
   res.writeHead(codice, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...extra });
@@ -46,30 +47,32 @@ function daParametri(p) {
 }
 
 // ---- Telegram ----
+// Lingua dei messaggi: TG_LANG (en predefinito, it).
+const oraTg = ms => orario(ms, testiTg().locale);
 function testoRichiesta(r, esito = '') {
-  const e = tg.esc;
-  const disp = [r.info?.name, r.info?.vendor, r.info?.osName].filter(Boolean).map(e).join(' · ') || 'sconosciuto';
+  const e = tg.esc, T = testiTg();
+  const disp = [r.info?.name, r.info?.vendor, r.info?.osName].filter(Boolean).map(e).join(' · ') || T.sconosciuto;
   return [
-    `📶 <b>${tg.esc(SSID)} · richiesta di accesso</b>`,
-    `👤 Nome: ${r.nome ? '<b>' + e(r.nome) + '</b>' : '<i>non indicato</i>'}`,
-    `📱 Dispositivo: ${disp}`,
+    `📶 <b>${e(T.titolo(SSID))}</b>`,
+    `👤 ${T.nome}: ${r.nome ? '<b>' + e(r.nome) + '</b>' : '<i>' + T.nonIndicato + '</i>'}`,
+    `📱 ${T.dispositivo}: ${disp}`,
     `🔖 MAC <code>${r.mac}</code>${r.ip ? ' · IP ' + r.ip : ''}`,
     `📡 AP: ${e(r.info?.apName || r.apMac)} · ${bande[r.radioId] || ''}`,
-    r.verificato ? '' : '⚠️ <i>Non trovato tra i client del controller: verifica prima di approvare.</i>',
-    `🕒 ${ora(r.creata)} · senza risposta scade alle ${ora(r.scadeAttesa)}`,
+    r.verificato ? '' : `⚠️ <i>${T.nonVerificato}</i>`,
+    `🕒 ${T.scade(oraTg(r.creata), oraTg(r.scadeAttesa))}`,
     esito,
   ].filter(Boolean).join('\n');
 }
 const bottoniRichiesta = r => [
-  DURATE.map(h => ({ text: `✅ ${h} ${h === 1 ? 'ora' : 'ore'}`, callback_data: `sg:ok:${r.id}:${h}` })),
-  [{ text: '❌ Rifiuta', callback_data: `sg:no:${r.id}` }],
+  DURATE.map(h => ({ text: `✅ ${testiTg().ore(h)}`, callback_data: `sg:ok:${r.id}:${h}` })),
+  [{ text: `❌ ${testiTg().rifiuta}`, callback_data: `sg:no:${r.id}` }],
 ];
 
 async function nuovaRichiesta(dati, nome) {
   let info = null;
   try { info = await omada.cliente(dati.mac); } catch (e) { log('lettura client', e.message); }
   // Se il controller vede il client su un altro SSID la richiesta non ha senso.
-  if (info && info.ssid && info.ssid !== SSID) return { errore: 'Questo dispositivo non risulta collegato a ' + SSID + '.' };
+  if (info && info.ssid && info.ssid !== SSID) return { errore: 'altro-ssid' };
   const r = stato.crea({
     ...dati, nome: String(nome || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 40),
     verificato: Boolean(info),
@@ -87,45 +90,50 @@ async function nuovaRichiesta(dati, nome) {
 async function bottone(cb) {
   const [, azione, id, ore] = String(cb.data || '').split(':');
   const r = stato.get(id);
-  if (!r) return tg.rispondi(cb.id, 'Richiesta non trovata');
-  const quando = ora(Date.now());
+  const T = testiTg(), R = T.risposte;
+  if (!r) return tg.rispondi(cb.id, R.nonTrovata);
+  const quando = oraTg(Date.now());
   if (azione === 'ok') {
-    if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, 'Richiesta già chiusa');
+    if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, R.chiusa);
     const h = Number(ore);
-    if (!DURATE.includes(h)) return tg.rispondi(cb.id, 'Durata non valida');
+    if (!DURATE.includes(h)) return tg.rispondi(cb.id, R.durata);
     const scade = await omada.autorizza(r, h);
     stato.aggiorna(id, { stato: 'ok', ore: h, scade, chiusa: Date.now() });
-    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n✅ <b>Autorizzato ${h} ${h === 1 ? 'ora' : 'ore'}</b> alle ${quando}, fino alle ${ora(scade)}`),
-      [[{ text: '⛔ Revoca accesso', callback_data: `sg:rev:${id}` }]], cb.message.chat?.id);
+    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n✅ ${T.autorizzato(h, quando, oraTg(scade))}`),
+      [[{ text: `⛔ ${T.revoca}`, callback_data: `sg:rev:${id}` }]], cb.message.chat?.id);
     log('autorizzato', id, r.mac, h + 'h');
-    return tg.rispondi(cb.id, 'Autorizzato');
+    return tg.rispondi(cb.id, R.ok);
   }
   if (azione === 'no') {
-    if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, 'Richiesta già chiusa');
+    if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, R.chiusa);
     stato.aggiorna(id, { stato: 'no', chiusa: Date.now() });
-    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n❌ <b>Rifiutata</b> alle ${quando}`), null, cb.message.chat?.id);
+    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n❌ ${T.rifiutata(quando)}`), null, cb.message.chat?.id);
     log('rifiutata', id, r.mac);
-    return tg.rispondi(cb.id, 'Rifiutata');
+    return tg.rispondi(cb.id, R.no);
   }
   if (azione === 'rev') {
-    if (r.stato !== 'ok') return tg.rispondi(cb.id, 'Accesso non attivo');
+    if (r.stato !== 'ok') return tg.rispondi(cb.id, R.nonAttivo);
     await omada.revoca(r.mac);
     stato.aggiorna(id, { stato: 'revocata', chiusa: Date.now() });
-    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n⛔ <b>Accesso revocato</b> alle ${quando}`), null, cb.message.chat?.id);
+    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n⛔ ${T.revocata(quando)}`), null, cb.message.chat?.id);
     log('revocata', id, r.mac);
-    return tg.rispondi(cb.id, 'Accesso revocato');
+    return tg.rispondi(cb.id, R.revocato);
   }
-  return tg.rispondi(cb.id, 'Azione sconosciuta');
+  return tg.rispondi(cb.id, R.sconosciuta);
 }
 
 // ---- Pagine ----
-function paginaRichiesta(r) {
+function paginaRichiesta(r, lingua) {
   const s = r.stato === 'ok' && r.scade < Date.now() ? 'terminata' : r.stato;
-  return pagina({ stato: s, r, pausaMin: LIMITI.pausaRifiutoMin, attesaMin: LIMITI.attesaMin });
+  return pagina({ stato: s, r, lingua, pausaMin: LIMITI.pausaRifiutoMin, attesaMin: LIMITI.attesaMin });
 }
+const linguaRichiesta = (req, u) => linguaDa(req.headers['accept-language'], u.searchParams.get('lang'));
 
 async function gestisci(req, res) {
   const u = new URL(req.url, 'http://portale');
+  // Lingua dell'ospite dal browser (inglese predefinito, italiano se lo preferisce), ?lang=it|en per forzarla.
+  const lingua = linguaRichiesta(req, u);
+  const pag = s => pagina({ ...s, lingua });
   if (req.method === 'GET' && u.pathname === '/stile.css') {
     res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'max-age=300' });
     return res.end(CSS);
@@ -136,49 +144,49 @@ async function gestisci(req, res) {
   }
   if (req.method === 'GET' && u.pathname === '/stato') {
     const r = stato.get(u.searchParams.get('id'));
-    if (!r) return invia(res, 404, pagina({ stato: 'errore' }));
+    if (!r) return invia(res, 404, pag({ stato: 'errore' }));
     // Approvata: l'attesa (che si ricarica da sola) passa alla pagina di benvenuto.
     if (r.stato === 'ok' && r.scade > Date.now()) return vai(res, '/benvenuto?id=' + r.id);
-    return invia(res, 200, paginaRichiesta(r));
+    return invia(res, 200, paginaRichiesta(r, lingua));
   }
   if (req.method === 'GET' && u.pathname === '/benvenuto') {
     const r = stato.get(u.searchParams.get('id'));
-    if (!r) return invia(res, 404, pagina({ stato: 'errore' }));
+    if (!r) return invia(res, 404, pag({ stato: 'errore' }));
     if (r.stato !== 'ok' || r.scade <= Date.now()) return vai(res, '/stato?id=' + r.id);
     // Allo scadere del conto la pagina si ricarica e finisce su "Accesso terminato".
-    return invia(res, 200, pagina({ stato: 'ok', r, ricarica: '/benvenuto?id=' + r.id }));
+    return invia(res, 200, pag({ stato: 'ok', r, ricarica: '/benvenuto?id=' + r.id }));
   }
   // Anteprima con dati finti, senza toccare stato né controller.
-  // /anteprima/benvenuto?nome=Giulia&ore=4&secondi=90  (secondi: tempo rimasto, di default tutta la durata)
+  // /anteprima/benvenuto?nome=Guest&ore=4&secondi=90&lang=en  (secondi: tempo rimasto, di default tutta la durata)
   if (req.method === 'GET' && u.pathname === '/anteprima/benvenuto') {
     const ore = DURATE.includes(Number(u.searchParams.get('ore'))) ? Number(u.searchParams.get('ore')) : DURATE[0];
     const sec = Math.min(Math.max(Number(u.searchParams.get('secondi')) || ore * 3600, 1), ore * 3600);
     const nome = String(u.searchParams.get('nome') || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 40);
     const r = { id: 'anteprima', nome, ore, scade: Date.now() + sec * 1000 };
-    return invia(res, 200, pagina({ stato: 'ok', r, ricarica: '/anteprima/terminata' }));
+    return invia(res, 200, pag({ stato: 'ok', r, ricarica: '/anteprima/terminata' }));
   }
   if (req.method === 'GET' && u.pathname === '/anteprima/terminata') {
-    return invia(res, 200, pagina({ stato: 'terminata', r: { id: 'anteprima' } }));
+    return invia(res, 200, pag({ stato: 'terminata', r: { id: 'anteprima' } }));
   }
   if (req.method === 'POST' && u.pathname === '/richiesta') {
     const p = await corpo(req);
     const dati = daParametri(p);
-    if (!dati) return invia(res, 400, pagina({ stato: 'errore' }));
+    if (!dati) return invia(res, 400, pag({ stato: 'errore' }));
     const puo = stato.puoChiedere(dati.mac);
     if (puo.richiesta) return vai(res, '/stato?id=' + puo.richiesta.id);
-    if (puo.motivo === 'troppe') return invia(res, 429, pagina({ stato: 'troppe' }));
+    if (puo.motivo === 'troppe') return invia(res, 429, pag({ stato: 'troppe' }));
     const { r, errore } = await nuovaRichiesta(dati, p.nome);
-    return errore ? invia(res, 403, pagina({ stato: 'errore', messaggio: errore })) : vai(res, '/stato?id=' + r.id);
+    return errore ? invia(res, 403, pag({ stato: 'errore', errore })) : vai(res, '/stato?id=' + r.id);
   }
   if (req.method === 'POST' && u.pathname === '/rinnova') {
     const vecchia = stato.get((await corpo(req)).id);
-    if (!vecchia) return invia(res, 404, pagina({ stato: 'errore' }));
+    if (!vecchia) return invia(res, 404, pag({ stato: 'errore' }));
     const puo = stato.puoChiedere(vecchia.mac);
     if (puo.richiesta) return vai(res, '/stato?id=' + puo.richiesta.id);
-    if (puo.motivo === 'troppe') return invia(res, 429, pagina({ stato: 'troppe' }));
+    if (puo.motivo === 'troppe') return invia(res, 429, pag({ stato: 'troppe' }));
     const { mac, apMac, ssid, radioId, ip, redirectUrl, nome } = vecchia;
     const { r, errore } = await nuovaRichiesta({ mac, apMac, ssid, radioId, ip, redirectUrl }, nome);
-    return errore ? invia(res, 403, pagina({ stato: 'errore', messaggio: errore })) : vai(res, '/stato?id=' + r.id);
+    return errore ? invia(res, 403, pag({ stato: 'errore', errore })) : vai(res, '/stato?id=' + r.id);
   }
   if (req.method === 'GET') {
     // Qualsiasi altro percorso: è il redirect di Omada (parametri in query) o una visita diretta.
@@ -187,17 +195,20 @@ async function gestisci(req, res) {
     if (!dati) {
       // Redirect che non viene dall'SSID configurato o con un formato inatteso: si registra per capire cosa manda Omada.
       if (Object.keys(p).length) log('parametri non validi', u.pathname, JSON.stringify(p).slice(0, 600));
-      return invia(res, 200, pagina({ stato: 'errore' }));
+      return invia(res, 200, pag({ stato: 'errore' }));
     }
     const ultima = stato.perMac(dati.mac);
     if (ultima && ['attesa', 'no'].includes(ultima.stato)) return vai(res, '/stato?id=' + ultima.id);
-    return invia(res, 200, pagina({ stato: 'richiesta', parametri: p }));
+    return invia(res, 200, pag({ stato: 'richiesta', parametri: p }));
   }
   res.writeHead(405); res.end();
 }
 
 const server = http.createServer((req, res) => {
-  gestisci(req, res).catch(e => { log('errore', req.method, req.url, e.message); if (!res.headersSent) invia(res, 500, pagina({ stato: 'errore' })); });
+  gestisci(req, res).catch(e => {
+    log('errore', req.method, req.url, e.message);
+    if (!res.headersSent) invia(res, 500, pagina({ stato: 'errore', lingua: linguaDa(req.headers['accept-language']) }));
+  });
 });
 
 if (require.main === module) {
@@ -213,7 +224,7 @@ if (require.main === module) {
     for (const r of stato.scadute()) {
       log('scaduta', r.id, r.mac);
       // Le richieste di prima del topic non hanno msgChat: stavano nella chat privata del proprietario.
-      if (r.msgId) await tg.modifica(r.msgId, testoRichiesta(r, `\n⌛ <b>Scaduta</b> senza risposta alle ${ora(r.chiusa)}`), null, r.msgChat || tg.ADMIN).catch(e => log('telegram', e.message));
+      if (r.msgId) await tg.modifica(r.msgId, testoRichiesta(r, `\n⌛ ${testiTg().scaduta(oraTg(r.chiusa))}`), null, r.msgChat || tg.ADMIN).catch(e => log('telegram', e.message));
     }
   }, 30000);
 }

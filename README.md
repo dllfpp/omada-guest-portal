@@ -10,13 +10,14 @@ gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours ·
 - Guest pages are server-rendered HTML with **no JavaScript and no external resources**
   (before approval the guest has no internet): the waiting page refreshes itself, the welcome page shows a
   live **countdown** of the remaining time built in pure CSS.
-- The guest pages are in Italian.
+- **English by default, Italian when the guest's browser prefers it** (`Accept-Language`, with the right
+  `<html lang>`); `?lang=en|it` forces one. Telegram messages to the owner follow `TG_LANG` (`en` or `it`).
 
 ## Screenshots
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/1-request.png" width="390" height="780" alt="Request page: optional name field and 'Chiedi accesso' button"></td>
+    <td><img src="docs/screenshots/1-request.png" width="390" height="780" alt="Request page: optional name field and Ask for access button"></td>
     <td><img src="docs/screenshots/2-waiting.png" width="390" height="780" alt="Waiting page: request sent, waiting for approval"></td>
   </tr>
   <tr>
@@ -28,14 +29,14 @@ gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours ·
 What the owner receives on Telegram (demo data):
 
 ```
-📶 GUEST-WIFI · richiesta di accesso
-👤 Nome: Giulia
-📱 Dispositivo: iPhone · Apple · iOS
+📶 GUEST-WIFI · access request
+👤 Name: Guest
+📱 Device: iPhone · Apple · iOS
 🔖 MAC 02-00-00-00-00-01 · IP 10.20.30.40
 📡 AP: AP-LIVING · 5 GHz
-🕒 14:32 · senza risposta scade alle 14:42
-[ ✅ 4 ore ] [ ✅ 24 ore ]
-[ ❌ Rifiuta ]
+🕒 14:32 · expires without an answer at 14:42
+[ ✅ 4 hours ] [ ✅ 24 hours ]
+[ ❌ Reject ]
 ```
 
 ## How it works
@@ -43,9 +44,9 @@ What the owner receives on Telegram (demo data):
 ```
 guest joins the SSID ─▶ EAP redirects to the controller ─▶ controller redirects to this portal
    /?clientMac=…&apMac=…&ssidName=…&radioId=…&redirectUrl=…
-guest taps "Chiedi accesso" ─▶ POST /richiesta ─▶ Telegram message with buttons
+guest taps "Ask for access" ─▶ POST /richiesta ─▶ Telegram message with buttons
 owner taps ✅ ─▶ POST /{omadacId}/api/v2/hotspot/extPortal/auth (hotspot operator session)
-waiting page reloads ─▶ /benvenuto?id=… (welcome + countdown) ─▶ at zero: "Accesso terminato"
+waiting page reloads ─▶ /benvenuto?id=… (welcome + countdown) ─▶ at zero: "Access ended"
 ```
 
 - **Authorization** uses the External Portal Server API with a hotspot operator account. On controller
@@ -102,12 +103,12 @@ docker logs -f omada-guest-portal        # requests, approvals, button presses
 The service refuses to start if a required variable is missing. See [`.env.example`](.env.example) for every option.
 
 Preview the welcome page with fake data (no state, no controller calls):
-`/anteprima/benvenuto?nome=Giulia&ore=4&secondi=90` (at zero it moves to `/anteprima/terminata`).
+`/anteprima/benvenuto?nome=Guest&ore=4&secondi=90` (add `&lang=it` for Italian; at zero it moves to `/anteprima/terminata`).
 
 ## Tests
 
 ```sh
-node --test test/*.test.js   # full flow and Telegram topics, with a fake controller and a fake Telegram
+node --test test/*.test.js   # full flow, languages and Telegram topics, with a fake controller and a fake Telegram
 ```
 
 ## Notes and limits

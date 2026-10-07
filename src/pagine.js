@@ -1,13 +1,14 @@
 'use strict';
 // Pagine del portale, generate dal server. Nessun JavaScript: l'attesa si aggiorna con <meta refresh>.
 // Prima dell'autenticazione l'ospite non ha internet: niente font, immagini o script esterni.
+// Lingua: s.lingua ('en' predefinito, 'it'), decisa dal server con linguaDa().
+const { PAGINE, orario } = require('./lingue');
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-// hourCycle esplicito: senza i dati ICU italiani Node ricadrebbe su "02:42 PM".
-const ora = ms => new Date(ms).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: process.env.TZ || 'Europe/Rome' });
+const ora = (ms, locale = 'it-IT') => orario(ms, locale);
 
 // Nome della rete mostrato nelle pagine: l'SSID configurato.
-const rete = () => process.env.SSID || 'Wi-Fi ospiti';
+const rete = () => process.env.SSID || 'Guest Wi-Fi';
 
 // Icone SVG inline (tratti Lucide), decorative: aria-hidden.
 const ICONE = {
@@ -27,97 +28,83 @@ const nascosti = p => ['clientMac', 'clientIp', 'apMac', 'ssidName', 'radioId', 
 // Conto alla rovescia senza JavaScript: il server calcola i secondi rimasti, una animazione CSS
 // porta la proprietà intera --t a 0 e i contatori CSS la mostrano come ore:minuti:secondi.
 // Per i lettori di schermo un testo fisso, non un numero annunciato ogni secondo.
-function contoAllaRovescia(ms, ore) {
+function contoAllaRovescia(T, ms, ore) {
   const t = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60);
-  const oreTxt = `${h} ${h === 1 ? 'ora' : 'ore'}`, minTxt = `${m} ${m === 1 ? 'minuto' : 'minuti'}`;
-  const parlato = t < 60 ? 'meno di un minuto' : h && m ? `${oreTxt} e ${minTxt}` : h ? oreTxt : minTxt;
   return `<div class="conto-blocco">
-          <p class="conto-etichetta" id="conto-etichetta">Tempo rimasto</p>
-          <p class="conto" role="timer" aria-labelledby="conto-etichetta" style="--t: ${t}; animation-duration: ${t}s"><span class="sr">${t < 60 ? parlato : "circa " + parlato}</span></p>
-          <p class="conto-totale">su ${ore} ${ore === 1 ? 'ora concessa' : 'ore concesse'}</p>
+          <p class="conto-etichetta" id="conto-etichetta">${T.ok.rimasto}</p>
+          <p class="conto" role="timer" aria-labelledby="conto-etichetta" style="--t: ${t}; animation-duration: ${t}s"><span class="sr">${T.ok.parlato(h, m, t)}</span></p>
+          <p class="conto-totale">${T.ok.totale(ore)}</p>
         </div>`;
 }
 
+const ancora = (T, id) => `<form class="modulo" method="post" action="/rinnova"><input type="hidden" name="id" value="${esc(id)}">
+        <button class="bottone" type="submit">${T.ancora}</button></form>`;
+
 // Contenuto di ogni stato: { tono, icona, titolo, testo, corpo }
-function contenuto(s) {
+function contenuto(s, T) {
   switch (s.stato) {
     case 'richiesta': return {
-      tono: 'neutro', icona: 'wifi', titolo: 'Chiedi l’accesso a internet',
-      testo: 'Questa è la rete per gli ospiti. La tua richiesta arriva a chi gestisce la rete, che la approva dal telefono.',
+      tono: 'neutro', icona: 'wifi', titolo: T.richiesta.titolo, testo: T.richiesta.testo,
       corpo: `<form class="modulo" method="post" action="/richiesta">
         ${nascosti(s.parametri || {})}
-        <label class="campo" for="nome">Il tuo nome <span class="facoltativo">(facoltativo)</span></label>
+        <label class="campo" for="nome">${T.richiesta.nome} <span class="facoltativo">${T.richiesta.facoltativo}</span></label>
         <input class="testo" id="nome" name="nome" type="text" maxlength="40" autocomplete="name" autocapitalize="words" aria-describedby="nome-aiuto">
-        <p class="aiuto" id="nome-aiuto">Serve a capire chi sta chiedendo di collegarsi.</p>
-        <button class="bottone" type="submit">Chiedi accesso</button>
+        <p class="aiuto" id="nome-aiuto">${T.richiesta.aiuto}</p>
+        <button class="bottone" type="submit">${T.richiesta.bottone}</button>
       </form>`,
     };
     case 'attesa': return {
-      tono: 'attesa', icona: 'attesa', titolo: 'Richiesta inviata',
-      testo: 'In attesa di approvazione. La pagina si aggiorna da sola: puoi lasciarla aperta.',
-      corpo: `<div class="avanzamento" role="status"><span class="barra"></span><span class="sr">In attesa</span></div>
-        <dl class="dati"><dt>Richiesta scade alle</dt><dd>${ora(s.r.scadeAttesa)}</dd>${s.r.nome ? `<dt>Nome</dt><dd>${esc(s.r.nome)}</dd>` : ''}</dl>`,
+      tono: 'attesa', icona: 'attesa', titolo: T.attesa.titolo, testo: T.attesa.testo,
+      corpo: `<div class="avanzamento" role="status"><span class="barra"></span><span class="sr">${T.attesa.sr}</span></div>
+        <dl class="dati"><dt>${T.attesa.scade}</dt><dd>${ora(s.r.scadeAttesa, T.locale)}</dd>${s.r.nome ? `<dt>${T.attesa.nome}</dt><dd>${esc(s.r.nome)}</dd>` : ''}</dl>`,
     };
     // Pagina di benvenuto dopo l'approvazione. Nessun link al redirectUrl di Omada: è la sonda
     // del sistema operativo (captive.apple.com, msftconnecttest.com), non la pagina cercata dall'ospite.
     case 'ok': return {
-      tono: 'ok', icona: 'ok', titolo: s.r.nome ? `Ti diamo il benvenuto, ${esc(s.r.nome)}` : 'Ti diamo il benvenuto',
-      testo: 'Sei online: da questo dispositivo puoi usare internet.',
-      corpo: `${contoAllaRovescia(s.r.scade - (s.adesso || Date.now()), s.r.ore)}
+      tono: 'ok', icona: 'ok', titolo: T.ok.titolo(s.r.nome ? esc(s.r.nome) : ''), testo: T.ok.testo,
+      corpo: `${contoAllaRovescia(T, s.r.scade - (s.adesso || Date.now()), s.r.ore)}
         <ul class="consigli">
-          <li>Puoi chiudere questa pagina e usare app e browser come sempre.</li>
-          <li>Quando l’accesso scade, apri una pagina qualsiasi per chiederne uno nuovo.</li>
+          ${T.ok.consigli.map(c => `<li>${c}</li>`).join('\n          ')}
         </ul>`,
     };
-    case 'no': return {
-      tono: 'no', icona: 'no', titolo: 'Richiesta non approvata',
-      testo: `Puoi riprovare tra ${s.pausaMin} minuti, oppure chiedere direttamente al padrone di casa.`,
-      corpo: '',
-    };
+    case 'no': return { tono: 'no', icona: 'no', titolo: T.no.titolo, testo: T.no.testo(s.pausaMin), corpo: '' };
     case 'scaduta': return {
-      tono: 'avviso', icona: 'attesa', titolo: 'Nessuna risposta',
-      testo: `La richiesta è scaduta dopo ${s.attesaMin} minuti senza risposta.`,
-      corpo: `<form class="modulo" method="post" action="/rinnova"><input type="hidden" name="id" value="${esc(s.r.id)}">
-        <button class="bottone" type="submit">Chiedi di nuovo</button></form>`,
+      tono: 'avviso', icona: 'attesa', titolo: T.scaduta.titolo, testo: T.scaduta.testo(s.attesaMin), corpo: ancora(T, s.r.id),
     };
     case 'terminata':
     case 'revocata': return {
-      tono: 'avviso', icona: 'avviso', titolo: s.stato === 'revocata' ? 'Accesso revocato' : 'Accesso terminato',
-      testo: s.stato === 'revocata' ? 'L’accesso a internet di questo dispositivo è stato revocato.' : 'Il tempo concesso è finito. Puoi fare una nuova richiesta.',
-      corpo: `<form class="modulo" method="post" action="/rinnova"><input type="hidden" name="id" value="${esc(s.r.id)}">
-        <button class="bottone" type="submit">Chiedi di nuovo</button></form>`,
+      tono: 'avviso', icona: 'avviso', titolo: T[s.stato].titolo, testo: T[s.stato].testo, corpo: ancora(T, s.r.id),
     };
-    case 'troppe': return {
-      tono: 'avviso', icona: 'avviso', titolo: 'Troppe richieste in corso',
-      testo: 'Ci sono già diverse richieste in attesa. Riprova tra qualche minuto.', corpo: '',
-    };
+    case 'troppe': return { tono: 'avviso', icona: 'avviso', titolo: T.troppe.titolo, testo: T.troppe.testo, corpo: '' };
     default: return {
-      tono: 'no', icona: 'avviso', titolo: 'Qualcosa non ha funzionato',
-      testo: esc(s.messaggio || `Collegati alla rete ${rete()} e apri una pagina qualsiasi per tornare qui.`), corpo: '',
+      tono: 'no', icona: 'avviso', titolo: T.errore.titolo,
+      testo: esc(s.errore === 'altro-ssid' ? T.errore.altroSsid(rete()) : T.errore.testo(rete())), corpo: '',
     };
   }
 }
 
 function pagina(s, { css = '/stile.css' } = {}) {
-  const c = contenuto(s);
+  const lingua = PAGINE[s.lingua] ? s.lingua : 'en';
+  const T = PAGINE[lingua];
+  const c = contenuto(s, T);
   // L'attesa si ricarica ogni 5 s; il benvenuto si ricarica allo scadere del conto (s.ricarica = URL).
   const refresh = s.stato === 'attesa' ? '<meta http-equiv="refresh" content="5">'
     : s.ricarica ? `<meta http-equiv="refresh" content="${Math.max(1, Math.ceil((s.r.scade - (s.adesso || Date.now())) / 1000) + 2)};url=${esc(s.ricarica)}">` : '';
   return `<!doctype html>
-<html lang="it">
+<html lang="${lingua}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 ${refresh}
-<title>${esc(rete())} · Wi-Fi ospiti</title>
+<title>${esc(rete())} · ${T.sottotitolo}</title>
 <link rel="stylesheet" href="${css}">
 </head>
 <body>
 <main class="pagina">
   <header class="testata">
     ${icona('wifi', 'marchio')}
-    <div><p class="rete">${esc(rete())}</p><p class="sottotitolo">Wi-Fi ospiti</p></div>
+    <div><p class="rete">${esc(rete())}</p><p class="sottotitolo">${T.sottotitolo}</p></div>
   </header>
   <section class="scheda tono-${c.tono}" aria-labelledby="titolo">
     <div class="stato">${icona(c.icona)}</div>
@@ -125,7 +112,7 @@ ${refresh}
     <p class="testo-principale">${c.testo}</p>
     ${c.corpo}
   </section>
-  <p class="nota">${icona('scudo', 'piccola')}<span>Rete separata: i dispositivi collegati non si vedono tra loro e non raggiungono la rete di casa.</span></p>
+  <p class="nota">${icona('scudo', 'piccola')}<span>${T.nota}</span></p>
   <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>
 </main>
 </body>

@@ -44,22 +44,23 @@ test('redirect di Omada mostra il modulo con i parametri', async () => {
   const r = await fetch(base + '/?' + new URLSearchParams(PARAMETRI));
   const html = await r.text();
   assert.equal(r.status, 200);
-  assert.match(html, /Chiedi accesso/);
+  assert.match(html, /<html lang="en">/);
+  assert.match(html, /Ask for access/);
   assert.match(html, /name="clientMac" value="aa:bb:cc:00:00:01"/);
 });
 
 let id;
 test('richiesta → messaggio Telegram con bottoni → pagina di attesa', async () => {
-  const r = await post('/richiesta', { ...PARAMETRI, nome: '<b>Giulia</b>' });
+  const r = await post('/richiesta', { ...PARAMETRI, nome: '<b>Guest</b>' });
   assert.equal(r.status, 303);
   id = new URL(r.headers.get('location'), base).searchParams.get('id');
   const msg = chiamate.find(c => c[0] === 'invia');
-  assert.match(msg[1], /&lt;b&gt;Giulia&lt;\/b&gt;/, 'nome escapato');
+  assert.match(msg[1], /&lt;b&gt;Guest&lt;\/b&gt;/, 'nome escapato');
   assert.match(msg[1], /iPhone · Apple · iOS/);
   assert.deepEqual(msg[2][0].map(b => b.callback_data), [`sg:ok:${id}:4`, `sg:ok:${id}:24`]);
   const pag = await (await fetch(base + '/stato?id=' + id)).text();
   assert.match(pag, /http-equiv="refresh"/);
-  assert.match(pag, /Richiesta inviata/);
+  assert.match(pag, /Request sent/);
 });
 
 test('seconda richiesta dallo stesso dispositivo riporta alla stessa attesa', async () => {
@@ -78,13 +79,13 @@ test('durata non prevista rifiutata, poi approvazione 4 ore', async () => {
   assert.equal(r.status, 303);
   assert.equal(r.headers.get('location'), '/benvenuto?id=' + id);
   const pag = await (await fetch(base + r.headers.get('location'))).text();
-  assert.match(pag, /Ti diamo il benvenuto, &lt;b&gt;Giulia&lt;\/b&gt;/);
-  assert.match(pag, /Tempo rimasto/);
+  assert.match(pag, /Welcome, &lt;b&gt;Guest&lt;\/b&gt;/);
+  assert.match(pag, /Time left/);
   const t = Number(pag.match(/--t: (\d+)/)[1]);
   assert.ok(t > 14390 && t <= 14400, 'conto alla rovescia di circa 4 ore: ' + t);
   assert.match(pag, /animation-duration: \d+s/);
   assert.match(pag, /http-equiv="refresh" content="\d+;url=\/benvenuto\?id=/);
-  assert.doesNotMatch(pag, /fino alle/);
+  assert.doesNotMatch(pag, /until/);
   assert.doesNotMatch(pag, /neverssl/);
   assert.doesNotMatch(pag, /http-equiv="refresh" content="5"/);
 });
@@ -92,7 +93,7 @@ test('durata non prevista rifiutata, poi approvazione 4 ore', async () => {
 test('revoca da Telegram', async () => {
   await bottone({ id: 'q', data: `sg:rev:${id}`, message: { message_id: 7 } });
   assert.deepEqual(chiamate.find(c => c[0] === 'unauth'), ['unauth', 'AA-BB-CC-00-00-01']);
-  assert.match(await (await fetch(base + '/stato?id=' + id)).text(), /Accesso revocato/);
+  assert.match(await (await fetch(base + '/stato?id=' + id)).text(), /Access revoked/);
 });
 
 test('rifiuto blocca nuove richieste per la pausa', async () => {
@@ -101,7 +102,7 @@ test('rifiuto blocca nuove richieste per la pausa', async () => {
   await bottone({ id: 'q', data: `sg:no:${id2}`, message: { message_id: 7 } });
   const r2 = await post('/richiesta', { ...PARAMETRI, clientMac: 'AA-BB-CC-00-00-03' });
   assert.equal(new URL(r2.headers.get('location'), base).searchParams.get('id'), id2);
-  assert.match(await (await fetch(base + '/stato?id=' + id2)).text(), /non approvata/);
+  assert.match(await (await fetch(base + '/stato?id=' + id2)).text(), /Request not approved/);
 });
 
 test('client su un altro SSID: niente richiesta', async () => {
@@ -110,10 +111,35 @@ test('client su un altro SSID: niente richiesta', async () => {
 });
 
 test('anteprima del benvenuto con dati finti', async () => {
-  const pag = await (await fetch(base + '/anteprima/benvenuto?nome=Giulia&ore=24&secondi=90')).text();
-  assert.match(pag, /Ti diamo il benvenuto, Giulia/);
+  const pag = await (await fetch(base + '/anteprima/benvenuto?nome=Guest&ore=24&secondi=90')).text();
+  assert.match(pag, /Welcome, Guest/);
   assert.match(pag, /--t: 90;/);
-  assert.match(pag, /su 24 ore concesse/);
+  assert.match(pag, /of 24 hours granted/);
   assert.match(pag, /content="92;url=\/anteprima\/terminata"/);
-  assert.match(await (await fetch(base + '/anteprima/terminata')).text(), /Accesso terminato/);
+  assert.match(await (await fetch(base + '/anteprima/terminata')).text(), /Access ended/);
+});
+
+test('italiano se il browser lo preferisce, inglese altrimenti, ?lang per forzare', async () => {
+  const conLingua = h => fetch(base + '/anteprima/benvenuto?nome=Guest&secondi=3725', { headers: { 'Accept-Language': h } }).then(r => r.text());
+  const it = await conLingua('it-IT,it;q=0.9,en;q=0.8');
+  assert.match(it, /<html lang="it">/);
+  assert.match(it, /Ti diamo il benvenuto, Guest/);
+  assert.match(it, /Tempo rimasto/);
+  assert.match(it, /circa 1 ora e 2 minuti/);
+  const en = await conLingua('en-US,en;q=0.9,it;q=0.5');
+  assert.match(en, /<html lang="en">/);
+  assert.match(en, /about 1 hour and 2 minutes/);
+  assert.match(await conLingua('de-DE,de;q=0.9'), /<html lang="en">/, 'lingua non supportata: inglese');
+  const forzata = await fetch(base + '/anteprima/benvenuto?lang=it').then(r => r.text());
+  assert.match(forzata, /<html lang="it">/);
+});
+
+test('rilevamento della lingua da Accept-Language', () => {
+  const { linguaDa } = require('../src/lingue');
+  assert.equal(linguaDa('it-IT,it;q=0.9,en;q=0.8'), 'it');
+  assert.equal(linguaDa('en-GB,en;q=0.9,it;q=0.8'), 'en');
+  assert.equal(linguaDa('fr-FR,fr;q=0.9,it;q=0.7'), 'it');
+  assert.equal(linguaDa('en;q=0.5,it;q=0.8'), 'it');
+  assert.equal(linguaDa(''), 'en');
+  assert.equal(linguaDa('it', 'en'), 'en');
 });
