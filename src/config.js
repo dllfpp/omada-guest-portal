@@ -6,10 +6,10 @@ const path = require('path');
 
 // Tutte le chiavi gestite dal wizard; le prime sono obbligatorie per far partire il portale.
 const OBBLIGATORIE = ['SSID', 'OMADA_URL', 'OMADA_ID', 'OMADA_SITE_ID', 'OMADA_CLIENT_ID', 'OMADA_CLIENT_SECRET', 'HOTSPOT_USER', 'HOTSPOT_PASS', 'TG_TOKEN', 'TG_CHAT'];
-const FACOLTATIVE = ['TG_ADMIN', 'TG_THREAD', 'TG_TOPIC', 'TG_LANG', 'DURATE', 'SCADENZA_MIN', 'PAUSA_RIFIUTO_MIN', 'MAX_IN_ATTESA'];
+const FACOLTATIVE = ['TG_ADMIN', 'TG_THREAD', 'TG_TOPIC', 'TG_LANG', 'DURATE', 'SCADENZA_MIN', 'PAUSA_RIFIUTO_MIN', 'MAX_IN_ATTESA', 'ADMIN_HASH', 'ADMIN_ALLOW'];
 const CHIAVI = [...OBBLIGATORIE, ...FACOLTATIVE];
 // Mai mostrate nelle pagine del wizard.
-const SEGRETE = ['OMADA_CLIENT_SECRET', 'HOTSPOT_PASS', 'TG_TOKEN'];
+const SEGRETE = ['OMADA_CLIENT_SECRET', 'HOTSPOT_PASS', 'TG_TOKEN', 'ADMIN_HASH'];
 
 const fileConfig = (dir = process.env.DATA_DIR || path.join(__dirname, '..', 'data')) => path.join(dir, 'config.json');
 

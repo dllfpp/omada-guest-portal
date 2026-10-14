@@ -31,7 +31,13 @@
     
     <label class="campo" for="max">Maximum requests waiting at the same time</label>
     <input class="testo" id="max" name="max" type="text" value="5" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
-    <div class="azioni"><a class="bottone secondario" href="chat.html">Back</a>
+    
+    <label class="campo" for="admin">Admin panel password (optional)</label>
+    <input class="testo" id="admin" name="admin" type="password" value="" autocomplete="new-password" spellcheck="false" autocapitalize="off" aria-describedby="admin-aiuto" minlength="10">
+    <p class="aiuto" id="admin-aiuto">Opens <code>/admin</code>: connected guests, history, extend, shorten or revoke access. At least 10 characters; empty means no panel. Only a hash is saved.</p>
+    <label class="campo" for="reti">Networks allowed to open the panel (optional)</label>
+    <input class="testo" id="reti" name="reti" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="reti-aiuto" >
+    <p class="aiuto" id="reti-aiuto">For example <code>192.168.1.0/24</code>, separated by commas. Empty means any network except the guests’ devices; set it if guests and LAN share the same subnet.</p><div class="azioni"><a class="bottone secondario" href="chat.html">Back</a>
       <button class="bottone" type="submit">Continue</button></div></form>
   </section>
   <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>

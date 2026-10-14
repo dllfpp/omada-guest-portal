@@ -95,7 +95,7 @@ async function hotspot(method, path, body) {
 // Autorizza il client per `ore` ore. `time` è la DURATA in millisecondi: Omada la somma all'ora attuale
 // (provato il 2026-10-06: passando la scadenza assoluta l'accesso finiva nel 2083).
 async function autorizza(c, ore) {
-  const durata = ore * 3600 * 1000;
+  const durata = Math.round(ore * 3600 * 1000);
   try {
     await hotspot('POST', '/extPortal/auth', {
       clientMac: c.mac, clientIp: c.ip || '', apMac: c.apMac, ssidName: c.ssid,

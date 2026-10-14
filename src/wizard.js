@@ -12,6 +12,7 @@ const config = require('./config');
 const { guscio, esc } = require('./pagine');
 const { linguaDa } = require('./lingue');
 const { WIZARD } = require('./wizard-testi');
+const { hashPassword } = require('./admin');
 
 const PASSI = ['controller', 'openapi', 'sito', 'ssid', 'operatore', 'telegram', 'chat', 'regole', 'riepilogo'];
 const SESSIONE_MS = 2 * 3600 * 1000;
@@ -203,7 +204,9 @@ function creaWizard({ codice = nuovoCodice(), daAmbiente = [], fileSetup, alSalv
         corpo: modulo('/passo/regole', campo('durate', t.regole.durate, { valore: b.DURATE || '4,24', aiuto: t.regole.durateAiuto, extra: 'required' })
           + campo('attesa', t.regole.attesa, { valore: b.SCADENZA_MIN || '10', extra: 'inputmode="numeric" required' })
           + campo('pausa', t.regole.pausa, { valore: b.PAUSA_RIFIUTO_MIN || '15', extra: 'inputmode="numeric" required' })
-          + campo('max', t.regole.max, { valore: b.MAX_IN_ATTESA || '5', extra: 'inputmode="numeric" required' }) + azioni(req, passo)),
+          + campo('max', t.regole.max, { valore: b.MAX_IN_ATTESA || '5', extra: 'inputmode="numeric" required' })
+          + campo('admin', t.regole.admin, { tipo: 'password', aiuto: b.ADMIN_HASH ? `${t.regole.adminAiuto} ${t.regole.adminSalvata}` : t.regole.adminAiuto, auto: 'new-password', extra: 'minlength="10"' })
+          + campo('reti', t.regole.reti, { valore: b.ADMIN_ALLOW, aiuto: t.regole.retiAiuto }) + azioni(req, passo)),
       });
       case 'riepilogo': {
         const v = t.riepilogo.voci;
@@ -320,7 +323,12 @@ function creaWizard({ codice = nuovoCodice(), daAmbiente = [], fileSetup, alSalv
         const durate = String(f.durate || '').split(',').map(s => s.trim()).filter(Boolean);
         const valori = [intero(f.attesa, 10), intero(f.pausa, 15), intero(f.max, 5)];
         if (!durate.length || durate.some(d => !/^\d+$/.test(d) || Number(d) < 1) || valori.includes(null)) return t.regole.numeri;
-        Object.assign(b, { DURATE: [...new Set(durate.map(Number))].join(','), SCADENZA_MIN: valori[0], PAUSA_RIFIUTO_MIN: valori[1], MAX_IN_ATTESA: valori[2] });
+        const pw = String(f.admin || '');
+        if (pw && pw.length < 10) return t.regole.corta;
+        const reti = String(f.reti || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (reti.some(r => !/^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(r) || Number(r.split('/')[1]) > 32)) return t.regole.retiErrate;
+        Object.assign(b, { DURATE: [...new Set(durate.map(Number))].join(','), SCADENZA_MIN: valori[0], PAUSA_RIFIUTO_MIN: valori[1], MAX_IN_ATTESA: valori[2], ADMIN_ALLOW: reti.join(',') });
+        if (pw) b.ADMIN_HASH = hashPassword(pw);
         return avanti;
       }
     }

@@ -3,7 +3,8 @@
 An external captive portal for **TP-Link Omada** guest Wi-Fi where every new device has to be
 **approved by the owner on Telegram**. The guest asks for access (name optional) and waits; the owner
 gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours · ⏱ Hours… · ❌ Reject**, and can
-**⛔ Revoke** an approved device later. A pinned message with one button **opens or closes** the guest
+**⛔ Revoke** an approved device later; a password-protected **admin panel** lists connected guests and
+the history, and extends, shortens or revokes their access. A pinned message with one button **opens or closes** the guest
 Wi-Fi without touching the access points.
 
 **[Try the live demo →](https://dllfpp.github.io/omada-guest-portal/)** (runs in your browser, with a simulated
@@ -152,10 +153,26 @@ docker logs -f omada-guest-portal        # requests, approvals, button presses
 Preview the welcome page with fake data (no state, no controller calls):
 `/anteprima/benvenuto?nome=Guest&ore=4&secondi=90` (add `&lang=it` for Italian; at zero it moves to `/anteprima/terminata`).
 
+## Admin panel
+
+`/admin` on the same address shows the **connected guests**, the requests **waiting** and the **history** of the
+last 30 days. For each connected guest: **+1 hour**, **−1 hour**, a **new duration from now** (1–720 hours) and
+**Revoke** (after a confirmation page). Extending authorizes the device again for the time left; shortening
+revokes and authorizes again for the shorter time, so the device may reconnect once. The Telegram message of
+that request is updated too. Server-side pages, no JavaScript, same style as the portal.
+
+Protection, since the panel answers on the port the guests can reach:
+
+- **password**: set it in the wizard (*Rules* step, only an scrypt hash is saved as `ADMIN_HASH`) or with
+  `ADMIN_PASS`; without one the panel is off. At most 10 wrong passwords every 10 minutes;
+- **session** cookie `HttpOnly`, `SameSite=Strict`, 8 hours; forms accepted only from the same origin;
+- **networks**: the addresses of guest devices are always refused; with `ADMIN_ALLOW` (for example
+  `192.168.1.0/24`) only those networks can open it. Set it when guests and LAN share a subnet.
+
 ## Tests and demo
 
 ```sh
-node --test test/*.test.js   # portal flow, languages, Telegram topics, setup wizard and first start,
+node --test test/*.test.js   # portal flow, admin panel, languages, Telegram topics, setup wizard and first start,
                              # with a fake controller and a fake Telegram
 node demo/build.js           # rebuilds the static demo in docs/ (GitHub Pages)
 ```

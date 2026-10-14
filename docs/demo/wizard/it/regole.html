@@ -31,7 +31,13 @@
     
     <label class="campo" for="max">Richieste in attesa al massimo nello stesso momento</label>
     <input class="testo" id="max" name="max" type="text" value="5" autocomplete="off" spellcheck="false" autocapitalize="off" inputmode="numeric">
-    <div class="azioni"><a class="bottone secondario" href="chat.html">Indietro</a>
+    
+    <label class="campo" for="admin">Password del pannello di amministrazione (facoltativa)</label>
+    <input class="testo" id="admin" name="admin" type="password" value="" autocomplete="new-password" spellcheck="false" autocapitalize="off" aria-describedby="admin-aiuto" minlength="10">
+    <p class="aiuto" id="admin-aiuto">Apre <code>/admin</code>: ospiti collegati, storico, allunga, accorcia o revoca l’accesso. Almeno 10 caratteri; vuota vuol dire niente pannello. Si salva solo un hash.</p>
+    <label class="campo" for="reti">Reti che possono aprire il pannello (facoltativo)</label>
+    <input class="testo" id="reti" name="reti" type="text" value="" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="reti-aiuto" >
+    <p class="aiuto" id="reti-aiuto">Per esempio <code>192.168.1.0/24</code>, separate da virgole. Vuoto vuol dire qualsiasi rete tranne i dispositivi ospiti; impostalo se ospiti e LAN sono nella stessa subnet.</p><div class="azioni"><a class="bottone secondario" href="chat.html">Indietro</a>
       <button class="bottone" type="submit">Continua</button></div></form>
   </section>
   <footer class="firma"><a href="https://buymeacoffee.com/dllfpp">Made with love ❤️ - DLLFPP</a></footer>

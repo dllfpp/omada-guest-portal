@@ -170,6 +170,9 @@ function paginaRichiesta(r, lingua) {
 }
 const linguaRichiesta = (req, u) => linguaDa(req.headers['accept-language'], u.searchParams.get('lang'));
 
+// Pannello di amministrazione su /admin (vedi admin.js).
+const admin = require('./admin').creaAdmin({ stato, controller: omada, tg, testoRichiesta, log });
+
 async function gestisci(req, res) {
   const u = new URL(req.url, 'http://portale');
   // Lingua dell'ospite dal browser (inglese predefinito, italiano se lo preferisce), ?lang=it|en per forzarla.
@@ -179,6 +182,7 @@ async function gestisci(req, res) {
     res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'max-age=300' });
     return res.end(CSS);
   }
+  if (await admin.gestisci(req, res, u, lingua, corpo)) return;
   if (req.method === 'GET' && u.pathname === '/salute') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ ok: true, chiuso: Boolean(stato.dati.chiuso), inAttesa: stato.tutte().filter(r => r.stato === 'attesa').length, telegram: tg.attivo, topic: tg.topic() }));
