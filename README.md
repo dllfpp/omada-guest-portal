@@ -10,6 +10,8 @@ Wi-Fi without touching the access points.
 **[Try the live demo →](https://dllfpp.github.io/omada-guest-portal/)** (runs in your browser, with a simulated
 controller and a simulated Telegram).
 
+The same project exists for Ubiquiti UniFi: [unifi-guest-portal](https://github.com/dllfpp/unifi-guest-portal).
+
 - Works with Omada EAPs managed by an Omada controller (tested on controller v6.2), no Omada gateway needed.
 - Node.js 22, **no dependencies**. One container, state kept in a JSON file on a volume.
 - **Setup wizard on the first start**: controller address, Open API credentials (with the steps to create
@@ -155,19 +157,34 @@ Preview the welcome page with fake data (no state, no controller calls):
 
 ## Admin panel
 
-`/admin` on the same address shows the **connected guests**, the requests **waiting** and the **history** of the
-last 30 days. For each connected guest: **+1 hour**, **−1 hour**, a **new duration from now** (1–720 hours) and
-**Revoke** (after a confirmation page). Extending authorizes the device again for the time left; shortening
-revokes and authorizes again for the shorter time, so the device may reconnect once. The Telegram message of
-that request is updated too. Server-side pages, no JavaScript, same style as the portal.
+Open `http://<docker-host>:8097/admin` (same address and port as the portal) and sign in with the admin password.
+The panel shows:
 
-Protection, since the panel answers on the port the guests can reach:
+- **Connected guests**: name, device, MAC, access point, expiry and time left. For each one: **+1 hour**,
+  **−1 hour**, a **new duration from now** (1–720 hours) and **Revoke** (after a confirmation page).
+- **Waiting for approval**: requests nobody has answered yet.
+- **History**: every request of the last 30 days with its outcome (approved, rejected, revoked, ended, no answer).
 
-- **password**: set it in the wizard (*Rules* step, only an scrypt hash is saved as `ADMIN_HASH`) or with
-  `ADMIN_PASS`; without one the panel is off. At most 10 wrong passwords every 10 minutes;
-- **session** cookie `HttpOnly`, `SameSite=Strict`, 8 hours; forms accepted only from the same origin;
-- **networks**: the addresses of guest devices are always refused; with `ADMIN_ALLOW` (for example
-  `192.168.1.0/24`) only those networks can open it. Set it when guests and LAN share a subnet.
+How the actions reach the controller:
+
+- **Extend** authorizes the device again for the time left plus the extra time (External Portal API).
+- **Shorten** revokes and authorizes again for the shorter time, so the device may reconnect once.
+- **Revoke** runs the Open API `unauth`, then `reconnect`, then the hotspot *Unauthorize*: the access point only
+  blocks new connections, so without the reconnect a tunnel already open (a VPN over UDP, for example) would
+  keep working. The device reconnects by itself and finds the portal again. For a device that is not
+  connected, the hotspot *Unauthorize* alone is enough.
+- The Telegram message of that request is updated too.
+
+Server-side pages, no JavaScript, same style as the portal. Protection, since the panel answers on the port the
+guests can reach:
+
+- **Password**: set it in the wizard (*Rules* step; only an scrypt hash is saved, as `ADMIN_HASH`) or with
+  `ADMIN_PASS`. Without one the panel is off. At most 10 wrong passwords every 10 minutes.
+- **Session**: cookie `HttpOnly`, `SameSite=Strict`, 8 hours; forms are accepted only from the same origin.
+- **Networks**: guest devices that are waiting or connected are always refused (by the IP Omada passes in the
+  redirect). With `ADMIN_ALLOW`, for example
+  `192.168.1.0/24`, only those networks can open the panel: set it, so guests are kept out even after their
+  access ends.
 
 ## Tests and demo
 
