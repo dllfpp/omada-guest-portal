@@ -42,6 +42,16 @@ body.demo { display: block; }
 }
 .tg-riga button:hover { filter: brightness(.97); }
 .tg-riga button:active { transform: scale(.98); }
+.tg-risposta { margin-top: 12px; display: flex; gap: 8px; }
+.tg-risposta input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--primary-tenue); border-radius: 12px;
+  font: 500 1rem/1.2 var(--font); color: var(--card-fg); background: var(--bg);
+}
+.tg-risposta input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.tg-risposta button {
+  min-width: 44px; min-height: 44px; border: 0; border-radius: 12px; cursor: pointer;
+  font: 700 1rem/1 var(--font); color: var(--primary); background: var(--primary-tenue);
+}
 .tg-avviso { margin: 0; min-height: 1.5em; padding: 0 20px 14px; font-size: .875rem; font-weight: 600; color: var(--ok); background: var(--bg); }
 .demo-comandi { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
 .demo-comandi .bottone { width: auto; margin-top: 0; padding: 12px 20px; }

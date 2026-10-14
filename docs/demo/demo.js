@@ -37,12 +37,12 @@
   var lingua = /^it\b/i.test(new URLSearchParams(location.search).get('lang') || navigator.language || '') ? 'it' : 'en';
 
   // Stato simulato: una richiesta alla volta, come un solo dispositivo.
-  var stato, r, messaggio, timerAttesa;
-  var ATTESA_MIN = 10, PAUSA_MIN = 15;
+  var stato, r, messaggio, timerAttesa, domanda;
+  var ATTESA_MIN = 10, PAUSA_MIN = 15, MAX_ORE = 720;
 
   function nuovoStato() {
     clearTimeout(timerAttesa);
-    stato = 'richiesta'; r = null; messaggio = null;
+    stato = 'richiesta'; r = null; messaggio = null; domanda = null;
     disegnaTelefono(); disegnaChat();
   }
 
@@ -132,6 +132,49 @@
       bolla.appendChild(tastiera);
     }
     chat.appendChild(bolla);
+    if (domanda) chat.appendChild(bollaDomanda());
+  }
+
+  // "Hours…": il bot chiede le ore con una risposta forzata; qui la risposta si scrive nel campo sotto.
+  function bollaDomanda() {
+    var T = P.tg();
+    var b = document.createElement('article');
+    b.className = 'tg-bolla';
+    var t = document.createElement('div');
+    t.className = 'tg-testo';
+    var esc = function (s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+    t.innerHTML = (domanda.errore ? T.oreNonValide(MAX_ORE) : T.chiediOre(esc(r.nome || r.mac), MAX_ORE));
+    b.appendChild(t);
+    var f = document.createElement('form');
+    f.className = 'tg-risposta';
+    var campo = document.createElement('input');
+    campo.type = 'text'; campo.inputMode = 'numeric'; campo.placeholder = '6'; campo.autocomplete = 'off';
+    campo.setAttribute('aria-label', T.oreLibere);
+    var invia = document.createElement('button');
+    invia.type = 'submit'; invia.textContent = '➤';
+    invia.setAttribute('aria-label', 'Send');
+    f.appendChild(campo); f.appendChild(invia);
+    f.addEventListener('submit', function (e) { e.preventDefault(); rispondiOre(campo.value); });
+    b.appendChild(f);
+    setTimeout(function () { campo.focus(); }, 0);
+    return b;
+  }
+
+  function rispondiOre(valore) {
+    var t = String(valore).trim(), h = /^\d+$/.test(t) ? Number(t) : 0;
+    if (!(stato === 'attesa' || stato === 'scaduta')) { domanda = null; rispondi(P.tg().risposte.chiusa); disegnaChat(); return; }
+    if (h < 1 || h > MAX_ORE) { domanda = { errore: true }; disegnaChat(); return; }
+    domanda = null;
+    approva(h);
+  }
+
+  function approva(ore) {
+    var ora = Date.now();
+    clearTimeout(timerAttesa);
+    r.ore = ore; r.scade = ora + ore * 3600000; stato = 'ok';
+    messaggio = { esito: { tipo: 'ok', ore: ore, quando: ora, fino: r.scade }, bottoni: 'revoca' };
+    rispondi(P.tg().risposte.ok);
+    disegnaTelefono(); disegnaChat();
   }
 
   function rispondi(testo) {
@@ -143,10 +186,9 @@
   function premi(dati) {
     var parti = dati.split(':'), azione = parti[1], ore = Number(parti[3]), R = P.tg().risposte, ora = Date.now();
     if (azione === 'ok' && (stato === 'attesa' || stato === 'scaduta')) {
-      clearTimeout(timerAttesa);
-      r.ore = ore; r.scade = ora + ore * 3600000; stato = 'ok';
-      messaggio = { esito: { tipo: 'ok', ore: ore, quando: ora, fino: r.scade }, bottoni: 'revoca' };
-      rispondi(R.ok);
+      domanda = null; approva(ore); return;
+    } else if (azione === 'ore' && (stato === 'attesa' || stato === 'scaduta')) {
+      domanda = { errore: false }; rispondi(P.tg().oreLibere); disegnaChat(); return;
     } else if (azione === 'no' && (stato === 'attesa' || stato === 'scaduta')) {
       clearTimeout(timerAttesa);
       stato = 'no';
