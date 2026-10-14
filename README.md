@@ -2,8 +2,9 @@
 
 An external captive portal for **TP-Link Omada** guest Wi-Fi where every new device has to be
 **approved by the owner on Telegram**. The guest asks for access (name optional) and waits; the owner
-gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours · ❌ Reject**, and can
-**⛔ Revoke** an approved device later.
+gets a message with the device details and taps **✅ 4 hours · ✅ 24 hours · ⏱ Hours… · ❌ Reject**, and can
+**⛔ Revoke** an approved device later. A pinned message with one button **opens or closes** the guest
+Wi-Fi without touching the access points.
 
 **[Try the live demo →](https://dllfpp.github.io/omada-guest-portal/)** (runs in your browser, with a simulated
 controller and a simulated Telegram).
@@ -41,9 +42,19 @@ What the owner receives on Telegram (demo data):
 🔖 MAC 02-00-00-00-00-01 · IP 10.20.30.40
 📡 AP: AP-LIVING · 5 GHz
 🕒 14:32 · expires without an answer at 14:42
-[ ✅ 4 hours ] [ ✅ 24 hours ]
+[ ✅ 4 hours ] [ ✅ 24 hours ] [ ⏱ Hours… ]
 [ ❌ Reject ]
 ```
+
+**⏱ Hours…** makes the bot ask *"For how many hours should I approve Guest?"* as a forced reply: answer with
+a whole number from 1 to 720 (30 days) and the device is approved for that long. An invalid number gets the
+question again; each question can be answered once, and only by `TG_ADMIN`.
+
+**Open / close the guest Wi-Fi.** At startup the bot pins a message in the chat/topic with one button,
+**🔒 Close guests** or **🔓 Open guests**. While closed, the SSID stays on and visible but the portal shows
+*"Guest Wi-Fi closed"* and accepts no new requests; devices already approved keep their access until it
+expires. Hiding or disabling the SSID instead would re-provision every access point and briefly drop all
+the other wireless networks too.
 
 ## How it works
 
@@ -96,6 +107,8 @@ the buttons would fail with `409 Conflict`.
   name. The Bot API cannot list topics, so the portal learns the topic id from the first message written in
   it and confirms there; until then requests go privately to `TG_ADMIN`. Or set `TG_THREAD` directly.
 - Buttons work for anyone pressing them in the configured chat/topic, and for `TG_ADMIN` everywhere.
+- The bot can keep Telegram's privacy mode on: it only needs button presses and replies to its own messages.
+  To pin the open/close message it needs the *Pin messages* admin right.
 
 ## Install and set up
 

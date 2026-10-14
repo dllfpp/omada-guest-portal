@@ -26,7 +26,8 @@ function testoRichiesta(r, esito = '') {
 }
 
 const bottoniRichiesta = r => [
-  durate().map(h => ({ text: `✅ ${testiTg().ore(h)}`, callback_data: `sg:ok:${r.id}:${h}` })),
+  [...durate().map(h => ({ text: `✅ ${testiTg().ore(h)}`, callback_data: `sg:ok:${r.id}:${h}` })),
+    { text: `⏱ ${testiTg().oreLibere}`, callback_data: `sg:ore:${r.id}` }],
   [{ text: `❌ ${testiTg().rifiuta}`, callback_data: `sg:no:${r.id}` }],
 ];
 

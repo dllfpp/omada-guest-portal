@@ -76,6 +76,7 @@ function contenuto(s, T) {
     case 'revocata': return {
       tono: 'avviso', icona: 'avviso', titolo: T[s.stato].titolo, testo: T[s.stato].testo, corpo: ancora(T, s.r.id),
     };
+    case 'chiuso': return { tono: 'avviso', icona: 'avviso', titolo: T.chiuso.titolo, testo: T.chiuso.testo, corpo: '' };
     case 'troppe': return { tono: 'avviso', icona: 'avviso', titolo: T.troppe.titolo, testo: T.troppe.testo, corpo: '' };
     default: return {
       tono: 'no', icona: 'avviso', titolo: T.errore.titolo,

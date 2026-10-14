@@ -31,6 +31,14 @@ const invia = (testo, bottoni) => api('sendMessage', {
   ...(bottoni ? { reply_markup: { inline_keyboard: bottoni } } : {}),
 });
 
+// Domanda con risposta forzata: Telegram apre la risposta al messaggio, che arriva al bot anche con la privacy mode.
+const chiedi = testo => api('sendMessage', {
+  ...destinazione(), text: testo, parse_mode: 'HTML',
+  reply_markup: { force_reply: true, input_field_placeholder: '6' },
+});
+
+const fissa = (chat, msgId) => api('pinChatMessage', { chat_id: chat, message_id: msgId, disable_notification: true });
+
 // `chat` è quella in cui il messaggio è stato mandato (i messaggi vecchi possono stare in privato).
 const modifica = (msgId, testo, bottoni, chat = CHAT) => api('editMessageText', {
   chat_id: chat, message_id: msgId, text: testo, parse_mode: 'HTML', disable_web_page_preview: true,
@@ -60,17 +68,24 @@ async function scopriTopic(m, stato, log) {
     .catch(e => log('telegram', e.message));
 }
 
-// Ciclo di lettura. `gestisci(callback)` riceve solo le pressioni autorizzate.
-async function ascolta(stato, gestisci, log = console.log) {
+// Ciclo di lettura. `gestisci(callback)` riceve solo le pressioni autorizzate;
+// `risposta(messaggio)` le risposte del proprietario ai messaggi del bot.
+async function ascolta(stato, gestisci, log = console.log, risposta = null) {
   if (!thread && stato.dati.tgThread) thread = stato.dati.tgThread;
   for (;;) {
     try {
       // I messaggi servono solo finché il topic non è noto.
-      const tipi = thread || !TOPIC ? ['callback_query'] : ['callback_query', 'message'];
+      const tipi = (thread || !TOPIC) && !risposta ? ['callback_query'] : ['callback_query', 'message'];
       const agg = await api('getUpdates', { offset: stato.dati.offset, timeout: 50, allowed_updates: tipi });
       for (const u of agg) {
         stato.dati.offset = u.update_id + 1;
-        if (u.message) { await scopriTopic(u.message, stato, log); continue; }
+        if (u.message) {
+          const m = u.message;
+          await scopriTopic(m, stato, log);
+          if (risposta && m.reply_to_message?.from?.is_bot && String(m.from?.id) === ADMIN)
+            await risposta(m).catch(e => log('errore risposta', e.message));
+          continue;
+        }
         const cb = u.callback_query;
         if (!cb) continue;
         if (!autorizzato(cb)) { log('bottone da utente non autorizzato', cb.from?.id); await rispondi(cb.id, testi().risposte.nonAutorizzato); continue; }
@@ -88,4 +103,4 @@ async function ascolta(stato, gestisci, log = console.log) {
 
 const topic = () => (thread ? { chat: CHAT, thread } : TOPIC ? { chat: CHAT, inAttesa: TOPIC } : null);
 
-module.exports = { invia, modifica, rispondi, ascolta, autorizzato, scopriTopic, topic, esc, ADMIN, attivo: Boolean(TOKEN && CHAT) };
+module.exports = { invia, chiedi, fissa, modifica, rispondi, ascolta, autorizzato, scopriTopic, topic, esc, ADMIN, attivo: Boolean(TOKEN && CHAT) };

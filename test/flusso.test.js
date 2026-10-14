@@ -57,7 +57,7 @@ test('richiesta → messaggio Telegram con bottoni → pagina di attesa', async 
   const msg = chiamate.find(c => c[0] === 'invia');
   assert.match(msg[1], /&lt;b&gt;Guest&lt;\/b&gt;/, 'nome escapato');
   assert.match(msg[1], /iPhone · Apple · iOS/);
-  assert.deepEqual(msg[2][0].map(b => b.callback_data), [`sg:ok:${id}:4`, `sg:ok:${id}:24`]);
+  assert.deepEqual(msg[2][0].map(b => b.callback_data), [`sg:ok:${id}:4`, `sg:ok:${id}:24`, `sg:ore:${id}`]);
   const pag = await (await fetch(base + '/stato?id=' + id)).text();
   assert.match(pag, /http-equiv="refresh"/);
   assert.match(pag, /Request sent/);
@@ -142,4 +142,25 @@ test('rilevamento della lingua da Accept-Language', () => {
   assert.equal(linguaDa('en;q=0.5,it;q=0.8'), 'it');
   assert.equal(linguaDa(''), 'en');
   assert.equal(linguaDa('it', 'en'), 'en');
+});
+
+test('ore libere: il bot chiede le ore, numero non valido richiesto di nuovo, poi 6 ore', async () => {
+  const { risposta } = require('../src/server');
+  const domande = [];
+  tg.chiedi = async testo => { domande.push(testo); return { message_id: 100 + domande.length }; };
+  const r = await post('/richiesta', { ...PARAMETRI, clientMac: 'aa:bb:cc:00:00:09' });
+  const idOre = new URL(r.headers.get('location'), base).searchParams.get('id');
+  await bottone({ id: 'q', data: `sg:ore:${idOre}`, message: { message_id: 8 } });
+  assert.equal(domande.length, 1);
+  const prima = chiamate.filter(c => c[0] === 'auth').length;
+  await risposta({ text: 'tante', reply_to_message: { message_id: 101 } });
+  assert.equal(domande.length, 2, 'risposta non valida: nuova domanda');
+  await risposta({ text: '9999', reply_to_message: { message_id: 102 } });
+  assert.equal(domande.length, 3, 'oltre il massimo: nuova domanda');
+  await risposta({ text: '6', reply_to_message: { message_id: 103 } });
+  const auth = chiamate.filter(c => c[0] === 'auth');
+  assert.equal(auth.length, prima + 1);
+  assert.deepEqual(auth.at(-1), ['auth', 'AA-BB-CC-00-00-09', 6]);
+  await risposta({ text: '6', reply_to_message: { message_id: 103 } });
+  assert.equal(chiamate.filter(c => c[0] === 'auth').length, prima + 1, 'domanda già usata: niente doppia autorizzazione');
 });

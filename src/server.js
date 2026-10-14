@@ -68,8 +68,46 @@ async function nuovaRichiesta(dati, nome) {
   return { r };
 }
 
+const MAX_ORE = 720; // 30 giorni
+
+async function approva(r, h, msgId, chat) {
+  const T = testiTg();
+  const scade = await omada.autorizza(r, h);
+  stato.aggiorna(r.id, { stato: 'ok', ore: h, scade, chiusa: Date.now() });
+  await tg.modifica(msgId, testoRichiesta(r, `\n✅ ${T.autorizzato(h, oraTg(Date.now()), oraTg(scade))}`),
+    [[{ text: `⛔ ${T.revoca}`, callback_data: `sg:rev:${r.id}` }]], chat);
+  log('autorizzato', r.id, r.mac, h + 'h');
+}
+
+async function chiediOre(r, msgId, chat, testo) {
+  const m = await tg.chiedi(testo || testiTg().chiediOre(tg.esc(r.nome || r.mac), MAX_ORE));
+  stato.dati.domande = { ...(stato.dati.domande || {}), [m.message_id]: { id: r.id, msgId, chat } };
+  stato.salva();
+}
+
+// Risposta del proprietario a una domanda "quante ore": numero intero 1..MAX_ORE → autorizza.
+async function risposta(m) {
+  const d = stato.dati.domande?.[m.reply_to_message.message_id];
+  if (!d) return;
+  delete stato.dati.domande[m.reply_to_message.message_id];
+  stato.salva();
+  const r = stato.get(d.id);
+  if (!r || (r.stato !== 'attesa' && r.stato !== 'scaduta')) return tg.invia(testiTg().risposte.chiusa);
+  const t = String(m.text || '').trim();
+  const h = /^\d+$/.test(t) ? Number(t) : 0;
+  if (h < 1 || h > MAX_ORE) return chiediOre(r, d.msgId, d.chat, testiTg().oreNonValide(MAX_ORE));
+  await approva(r, h, d.msgId, d.chat);
+}
+
 async function bottone(cb) {
   const [, azione, id, ore] = String(cb.data || '').split(':');
+  if (azione === 'portale') {
+    const chiudi = id === 'chiudi';
+    if (Boolean(stato.dati.chiuso) !== chiudi) { stato.dati.chiuso = chiudi; stato.salva(); }
+    log(chiudi ? 'ospiti chiusi' : 'ospiti aperti');
+    await mostraPortale();
+    return tg.rispondi(cb.id, chiudi ? testiTg().chiusi : testiTg().aperti);
+  }
   const r = stato.get(id);
   const T = testiTg(), R = T.risposte;
   if (!r) return tg.rispondi(cb.id, R.nonTrovata);
@@ -78,12 +116,14 @@ async function bottone(cb) {
     if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, R.chiusa);
     const h = Number(ore);
     if (!DURATE.includes(h)) return tg.rispondi(cb.id, R.durata);
-    const scade = await omada.autorizza(r, h);
-    stato.aggiorna(id, { stato: 'ok', ore: h, scade, chiusa: Date.now() });
-    await tg.modifica(cb.message.message_id, testoRichiesta(r, `\n✅ ${T.autorizzato(h, quando, oraTg(scade))}`),
-      [[{ text: `⛔ ${T.revoca}`, callback_data: `sg:rev:${id}` }]], cb.message.chat?.id);
-    log('autorizzato', id, r.mac, h + 'h');
+    await approva(r, h, cb.message.message_id, cb.message.chat?.id);
     return tg.rispondi(cb.id, R.ok);
+  }
+  // Durata libera: il bot chiede le ore con una risposta forzata e aspetta il numero (vedi risposta()).
+  if (azione === 'ore') {
+    if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, R.chiusa);
+    await chiediOre(r, cb.message.message_id, cb.message.chat?.id);
+    return tg.rispondi(cb.id, T.oreLibere);
   }
   if (azione === 'no') {
     if (r.stato !== 'attesa' && r.stato !== 'scaduta') return tg.rispondi(cb.id, R.chiusa);
@@ -101,6 +141,26 @@ async function bottone(cb) {
     return tg.rispondi(cb.id, R.revocato);
   }
   return tg.rispondi(cb.id, R.sconosciuta);
+}
+
+// Messaggio fissato nel topic con un bottone che apre o chiude il portale. Gli AP non vengono toccati
+// (nascondere o spegnere l'SSID riprovisiona tutti gli AP e fa cadere per un attimo anche le altre reti).
+// Bottone inline e non tastiera: Telegram Desktop non mostra le tastiere nei topic.
+const testoPortale = () => stato.dati.chiuso
+  ? `🔒 ${testiTg().portaleChiuso(tg.esc(SSID))}`
+  : `🔓 ${testiTg().portaleAperto(tg.esc(SSID))}`;
+const bottonePortale = () => [[stato.dati.chiuso
+  ? { text: `🔓 ${testiTg().apri}`, callback_data: 'sg:portale:apri' }
+  : { text: `🔒 ${testiTg().chiudi}`, callback_data: 'sg:portale:chiudi' }]];
+
+async function mostraPortale() {
+  if (stato.dati.portaleMsg) {
+    try { return await tg.modifica(stato.dati.portaleMsg, testoPortale(), bottonePortale(), stato.dati.portaleChat); }
+    catch (e) { if (!/not found|MESSAGE_ID_INVALID/.test(e.message)) throw e; }
+  }
+  const m = await tg.invia(testoPortale(), bottonePortale());
+  stato.dati.portaleMsg = m.message_id; stato.dati.portaleChat = m.chat?.id; stato.salva();
+  await tg.fissa(m.chat?.id, m.message_id).catch(e => log('pin', e.message));
 }
 
 // ---- Pagine ----
@@ -121,7 +181,7 @@ async function gestisci(req, res) {
   }
   if (req.method === 'GET' && u.pathname === '/salute') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, inAttesa: stato.tutte().filter(r => r.stato === 'attesa').length, telegram: tg.attivo, topic: tg.topic() }));
+    return res.end(JSON.stringify({ ok: true, chiuso: Boolean(stato.dati.chiuso), inAttesa: stato.tutte().filter(r => r.stato === 'attesa').length, telegram: tg.attivo, topic: tg.topic() }));
   }
   if (req.method === 'GET' && u.pathname === '/stato') {
     const r = stato.get(u.searchParams.get('id'));
@@ -150,6 +210,7 @@ async function gestisci(req, res) {
     return invia(res, 200, pag({ stato: 'terminata', r: { id: 'anteprima' } }));
   }
   if (req.method === 'POST' && u.pathname === '/richiesta') {
+    if (stato.dati.chiuso) return invia(res, 403, pag({ stato: 'chiuso' }));
     const p = await corpo(req);
     const dati = daParametri(p);
     if (!dati) return invia(res, 400, pag({ stato: 'errore' }));
@@ -160,6 +221,7 @@ async function gestisci(req, res) {
     return errore ? invia(res, 403, pag({ stato: 'errore', errore })) : vai(res, '/stato?id=' + r.id);
   }
   if (req.method === 'POST' && u.pathname === '/rinnova') {
+    if (stato.dati.chiuso) return invia(res, 403, pag({ stato: 'chiuso' }));
     const vecchia = stato.get((await corpo(req)).id);
     if (!vecchia) return invia(res, 404, pag({ stato: 'errore' }));
     const puo = stato.puoChiedere(vecchia.mac);
@@ -180,7 +242,7 @@ async function gestisci(req, res) {
     }
     const ultima = stato.perMac(dati.mac);
     if (ultima && ['attesa', 'no'].includes(ultima.stato)) return vai(res, '/stato?id=' + ultima.id);
-    return invia(res, 200, pag({ stato: 'richiesta', parametri: p }));
+    return invia(res, 200, pag(stato.dati.chiuso ? { stato: 'chiuso' } : { stato: 'richiesta', parametri: p }));
   }
   res.writeHead(405); res.end();
 }
@@ -200,7 +262,10 @@ function avvia() {
   if (mancanti.length) { console.error('Configurazione incompleta: ' + mancanti.join(', ') + ' (avvia src/avvio.js per il wizard)'); process.exit(1); }
   if (!tg.attivo) log('Telegram non configurato (TG_TOKEN e TG_CHAT): le richieste non verranno notificate');
   server.listen(PORT, () => log(`portale su :${PORT}, SSID ${SSID}, durate ${DURATE.join('/')} h`));
-  if (tg.attivo) tg.ascolta(stato, bottone, log);
+  if (tg.attivo) {
+    tg.ascolta(stato, bottone, log, risposta);
+    mostraPortale().catch(e => log('telegram', e.message));
+  }
   // Richieste in attesa troppo a lungo → scadute, con il messaggio Telegram aggiornato.
   setInterval(async () => {
     for (const r of stato.scadute()) {
@@ -213,4 +278,4 @@ function avvia() {
 
 if (require.main === module) avvia();
 
-module.exports = { server, avvia, daParametri, testoRichiesta, bottone, stato };
+module.exports = { server, avvia, daParametri, testoRichiesta, bottone, risposta, stato };
