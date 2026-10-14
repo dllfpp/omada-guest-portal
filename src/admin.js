@@ -56,10 +56,11 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
     return true;
   }
 
-  // Indirizzo ammesso: mai quello di un dispositivo ospite; con ADMIN_ALLOW solo quelle reti.
+  // Indirizzo ammesso: mai quello di un ospite in attesa o con accesso in corso (gli IP vecchi possono
+  // essere stati riassegnati, anche alla LAN); con ADMIN_ALLOW solo quelle reti.
   function reteAmmessa(req) {
-    const ip = ipv4(req.socket.remoteAddress);
-    if (stato.tutte().some(r => r.ip && r.ip === ip)) return false;
+    const ip = ipv4(req.socket.remoteAddress), ora = Date.now();
+    if (stato.tutte().some(r => r.ip === ip && (r.stato === 'attesa' || (r.stato === 'ok' && r.scade > ora)))) return false;
     const reti = String(process.env.ADMIN_ALLOW || '').split(',').map(s => s.trim()).filter(Boolean);
     return !reti.length || reti.some(c => inRete(ip, c));
   }

@@ -129,6 +129,9 @@ test('uscita: la sessione non vale più', async () => {
 });
 
 test('reti: dispositivo ospite e reti fuori da ADMIN_ALLOW rifiutati', async () => {
+  const vecchia = stato.crea({ mac: 'AA-BB-CC-00-00-04', apMac: '02-00-00-00-AA-01', ssid: 'GUEST-WIFI', ip: '127.0.0.1' });
+  stato.aggiorna(vecchia.id, { stato: 'no', chiusa: Date.now() });
+  assert.equal((await get('/admin')).status, 200, 'una richiesta chiusa non blocca il suo vecchio IP');
   const ospite = stato.crea({ mac: 'AA-BB-CC-00-00-03', apMac: '02-00-00-00-AA-01', ssid: 'GUEST-WIFI', radioId: 1, ip: '127.0.0.1' });
   assert.equal((await get('/admin')).status, 403, 'IP di un ospite');
   stato.aggiorna(ospite.id, { ip: '10.0.0.1' });
