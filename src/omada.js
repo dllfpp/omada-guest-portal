@@ -112,6 +112,9 @@ async function revoca(mac) {
   // come non valida nel controller, ma l'AP lascia passare il traffico (provato il 2026-10-14).
   // Se il dispositivo non è collegato risponde "client does not exist": basta il disconnect qui sotto.
   try { await open('POST', `/hotspot/clients/${mac}/unauth`); } catch { /* proseguo comunque */ }
+  // L'AP blocca solo le connessioni nuove: un tunnel già aperto (VPN in UDP) continuerebbe a passare.
+  // Sganciare il client dal Wi-Fi le chiude; si ricollega da solo e trova il portale (provato il 2026-10-14).
+  try { await open('POST', `/clients/${mac}/reconnect`); } catch { /* dispositivo non collegato */ }
   try {
     const voci = (await hotspot('GET', `/sites/${CFG.site}/clients?currentPage=1&currentPageSize=1000`))?.data || [];
     for (const v of voci.filter(v => v.valid && String(v.mac).toUpperCase() === mac)) {
