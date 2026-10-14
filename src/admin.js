@@ -66,7 +66,7 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
   }
 
   const invia = (res, codice, html, extra = {}) => {
-    res.writeHead(codice, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer', ...extra });
+    res.writeHead(codice, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin', ...extra });
     res.end(html);
   };
   const vai = (res, dove, extra = {}) => { res.writeHead(303, { Location: dove, 'Cache-Control': 'no-store', ...extra }); res.end(); };
@@ -229,7 +229,7 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
     if (req.method === 'POST' && req.headers.origin) {
       let stesso = false;
       try { stesso = new URL(req.headers.origin).host === req.headers.host; } catch { /* origin non valido */ }
-      if (!stesso) { invia(res, 403, paginaAccesso(lingua)); return true; }
+      if (!stesso) { log('pannello: modulo rifiutato, origine', req.headers.origin); invia(res, 403, paginaAccesso(lingua, t.accesso.origine)); return true; }
     }
 
     if (req.method === 'POST' && u.pathname === '/admin/accesso') {

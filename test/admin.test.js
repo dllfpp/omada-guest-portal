@@ -66,11 +66,15 @@ test('senza sessione: pagina di accesso, password sbagliata rifiutata', async ()
 
 test('modulo da un altro sito rifiutato', async () => {
   assert.equal((await post('/admin/accesso', { password: 'password-di-prova' }, { Origin: 'https://evil.example' })).status, 403);
+  assert.equal((await post('/admin/accesso', { password: 'password-di-prova' }, { Origin: 'null' })).status, 403);
 });
 
 test('accesso: cookie HttpOnly, elenco attivi e storico, nome escapato', async () => {
-  const r = await post('/admin/accesso', { password: 'password-di-prova' });
+  // Come un browser vero: il modulo arriva con l'Origin della pagina stessa.
+  const r = await post('/admin/accesso', { password: 'password-di-prova' }, { Origin: base });
   assert.equal(r.status, 303);
+  const pag = await get('/admin');
+  assert.equal(pag.headers.get('referrer-policy'), 'same-origin', 'con no-referrer i browser mandano Origin: null');
   assert.match(r.headers.get('set-cookie'), /HttpOnly; SameSite=Strict; Path=\/admin/);
   biscotto = r.headers.get('set-cookie').split(';')[0];
   const html = await (await get('/admin')).text();
