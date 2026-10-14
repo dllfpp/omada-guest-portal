@@ -108,6 +108,10 @@ async function autorizza(c, ore) {
 // Revoca come il bottone "Unauthorize" degli Authorized Clients: vale anche per un dispositivo già
 // scollegato (l'Open API /hotspot/clients/{mac}/unauth risponde "client does not exist").
 async function revoca(mac) {
+  // Con il dispositivo collegato serve l'unauth dell'Open API: il solo "disconnect" segna l'autorizzazione
+  // come non valida nel controller, ma l'AP lascia passare il traffico (provato il 2026-10-14).
+  // Se il dispositivo non è collegato risponde "client does not exist": basta il disconnect qui sotto.
+  try { await open('POST', `/hotspot/clients/${mac}/unauth`); } catch { /* proseguo comunque */ }
   try {
     const voci = (await hotspot('GET', `/sites/${CFG.site}/clients?currentPage=1&currentPageSize=1000`))?.data || [];
     for (const v of voci.filter(v => v.valid && String(v.mac).toUpperCase() === mac)) {
