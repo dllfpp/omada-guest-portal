@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const { guscio, icona, esc } = require('./pagine');
 const { orario } = require('./lingue');
 const { ADMIN } = require('./admin-testi');
+const config = require('./config');
 
 const SESSIONE_MS = 8 * 3600 * 1000;
 const MAX_ORE = 720;
@@ -19,8 +20,16 @@ function hashPassword(pw) {
   const sale = crypto.randomBytes(16);
   return `scrypt$${sale.toString('base64')}$${crypto.scryptSync(String(pw), sale, 32).toString('base64')}`;
 }
+// Hash in uso. Se arriva dall'ambiente vero vale quello; altrimenti si rilegge /data/config.json a ogni
+// controllo, così reset-password.js ha effetto subito, senza riavviare il portale.
+function hashAttuale() {
+  if (process.env.ADMIN_HASH && !config.dalFile.has('ADMIN_HASH')) return process.env.ADMIN_HASH;
+  return config.leggi().ADMIN_HASH || process.env.ADMIN_HASH || '';
+}
+// Impronta della password in uso: se cambia, le sessioni aperte non valgono più.
+const impronta = () => crypto.createHash('sha256').update(process.env.ADMIN_PASS ? 'pass:' + process.env.ADMIN_PASS : 'hash:' + hashAttuale()).digest('hex');
 function passwordGiusta(pw) {
-  const chiaro = process.env.ADMIN_PASS, hash = process.env.ADMIN_HASH;
+  const chiaro = process.env.ADMIN_PASS, hash = hashAttuale();
   if (chiaro) {
     const a = crypto.createHash('sha256').update(String(pw)).digest(), b = crypto.createHash('sha256').update(chiaro).digest();
     return crypto.timingSafeEqual(a, b);
@@ -30,7 +39,7 @@ function passwordGiusta(pw) {
   const x = crypto.scryptSync(String(pw), Buffer.from(sale, 'base64'), 32), y = Buffer.from(atteso, 'base64');
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
-const attivo = () => Boolean(process.env.ADMIN_PASS || process.env.ADMIN_HASH);
+const attivo = () => Boolean(process.env.ADMIN_PASS || hashAttuale());
 
 // ---- Reti ammesse ----
 const ipv4 = ip => String(ip || '').replace(/^::ffff:/, '');
@@ -50,9 +59,9 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
   const cookie = req => Object.fromEntries(String(req.headers.cookie || '').split(';').map(c => c.trim().split('=')).filter(c => c.length === 2));
 
   function autenticato(req) {
-    const tok = cookie(req).gp_admin, scade = tok && sessioni.get(tok);
-    if (!scade || scade < Date.now()) { if (tok) sessioni.delete(tok); return false; }
-    sessioni.set(tok, Date.now() + SESSIONE_MS);
+    const tok = cookie(req).gp_admin, s = tok && sessioni.get(tok);
+    if (!s || s.scade < Date.now() || s.impronta !== impronta()) { if (tok) sessioni.delete(tok); return false; }
+    s.scade = Date.now() + SESSIONE_MS;
     return true;
   }
 
@@ -244,7 +253,7 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
         return true;
       }
       const tok = crypto.randomBytes(24).toString('base64url');
-      sessioni.set(tok, ora + SESSIONE_MS);
+      sessioni.set(tok, { scade: ora + SESSIONE_MS, impronta: impronta() });
       log('pannello: accesso da', ipv4(req.socket.remoteAddress));
       vai(res, '/admin', { 'Set-Cookie': `gp_admin=${tok}; HttpOnly; SameSite=Strict; Path=/admin; Max-Age=${SESSIONE_MS / 1000}` });
       return true;
@@ -281,4 +290,4 @@ function creaAdmin({ stato, controller, tg = null, testoRichiesta = null, log = 
   return { gestisci };
 }
 
-module.exports = { creaAdmin, hashPassword, passwordGiusta, inRete };
+module.exports = { creaAdmin, hashPassword, passwordGiusta, hashAttuale, inRete };

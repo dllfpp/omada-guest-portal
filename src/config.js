@@ -19,9 +19,11 @@ function leggi(file = fileConfig()) {
 
 // Copia nel processo i valori del file che l'ambiente non definisce già. Da chiamare prima di
 // caricare omada.js e telegram.js, che leggono la configurazione all'avvio.
+// Chiavi copiate dal file (le altre, se presenti, vengono dall'ambiente vero).
+const dalFile = new Set();
 function carica(file = fileConfig()) {
   const dati = leggi(file);
-  for (const k of CHIAVI) if (!process.env[k] && dati[k] !== undefined && dati[k] !== '') process.env[k] = String(dati[k]);
+  for (const k of CHIAVI) if (!process.env[k] && dati[k] !== undefined && dati[k] !== '') { process.env[k] = String(dati[k]); dalFile.add(k); }
   return dati;
 }
 
@@ -39,4 +41,4 @@ function salva(valori, file = fileConfig()) {
   return dati;
 }
 
-module.exports = { OBBLIGATORIE, FACOLTATIVE, CHIAVI, SEGRETE, fileConfig, leggi, carica, mancanti, salva };
+module.exports = { dalFile, OBBLIGATORIE, FACOLTATIVE, CHIAVI, SEGRETE, fileConfig, leggi, carica, mancanti, salva };

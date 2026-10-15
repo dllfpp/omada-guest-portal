@@ -185,11 +185,16 @@ guests can reach:
   redirect). With `ADMIN_ALLOW`, for example
   `192.168.1.0/24`, only those networks can open the panel: set it, so guests are kept out even after their
   access ends.
+- **Forgot the admin password?** It can't be recovered (only a hash is saved), but you can set a new one:
+  `docker exec <container> node src/reset-password.js` prints a new password and saves its hash in
+  `/data/config.json`. It works right away, without a restart, and open admin sessions are signed out. If the
+  password comes from the environment (`ADMIN_PASS` or `ADMIN_HASH` in `.env`), change it there and recreate
+  the container instead: the environment always wins over the saved file.
 
 ## Tests and demo
 
 ```sh
-node --test test/*.test.js   # portal flow, admin panel, languages, Telegram topics, setup wizard and first start,
+node --test test/*.test.js   # portal flow, admin panel and password reset, languages, Telegram topics, setup wizard and first start,
                              # with a fake controller and a fake Telegram
 node demo/build.js           # rebuilds the static demo in docs/ (GitHub Pages)
 ```
